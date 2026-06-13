@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/* ─── Terminal theme CSS custom properties ─────────────────────────────────── */
+
+/* Default / dark theme — applied before JS hydration sets data-theme          */
+:root {
+  --bg-terminal: rgba(10, 10, 10, 0.85);
+  --text-primary: #00ff9f;
+  --text-secondary: #888888;
+  --text-error: #ff5555;
+  --text-warning: #ffb86c;
+  --text-input: #f8f8f2;
+  --cursor: #00ff9f;
+
+  /* Next.js / Tailwind defaults (kept for layout compatibility) */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+[data-theme="dark"] {
+  --bg-terminal: rgba(10, 10, 10, 0.85);
+  --text-primary: #00ff9f;
+  --text-secondary: #888888;
+  --text-error: #ff5555;
+  --text-warning: #ffb86c;
+  --text-input: #f8f8f2;
+  --cursor: #00ff9f;
+}
+
+[data-theme="light"] {
+  --bg-terminal: rgba(245, 245, 245, 0.92);
+  --text-primary: #1a1a2e;
+  --text-secondary: #555555;
+  --text-error: #cc0000;
+  --text-warning: #d97706;
+  --text-input: #1a1a2e;
+  --cursor: #1a1a2e;
+}
+
+[data-theme="matrix"] {
+  --bg-terminal: rgba(0, 0, 0, 0.95);
+  --text-primary: #00ff41;
+  --text-secondary: #00bb2e;
+  --text-error: #ff4444;
+  --text-warning: #ffff00;
+  --text-input: #00ff41;
+  --cursor: #00ff41;
+}
+
+/* Matrix glow effect on ALL primary text */
+[data-theme="matrix"] * {
+  text-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+}
+
+/* Light theme improvements */
+[data-theme="light"] {
+  --bg-terminal: rgba(255, 255, 255, 0.95);
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a68;
+  --text-error: #d32f2f;
+  --text-warning: #f57c00;
+  --text-input: #1a1a2e;
+  --cursor: #1a1a2e;
+}
+
+/* ─── Base styles ───────────────────────────────────────────────────────────── */
+
+body {
+  background: #0a0a0a;
+  color: var(--text-primary);
+  font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+}
+
+/* ─── Blinking cursor animation (Req. 1.4) ──────────────────────────────────── */
+/* 500ms on / 500ms off = 1s cycle */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.terminal-cursor {
+  animation: blink 1s step-start infinite;
+}
+
+/* ─── Scrollbar styling for terminal area ───────────────────────────────────── */
+.terminal-panel ::-webkit-scrollbar {
+  width: 4px;
+}
+
+.terminal-panel ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-panel ::-webkit-scrollbar-thumb {
+  background: var(--text-secondary);
+  border-radius: 2px;
+}
