@@ -15,10 +15,11 @@ interface InputLineProps {
   onArrowDown: () => void;
   disabled: boolean;
   prompt: string;
+  commandHistory?: string[];
 }
 
 const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLine(
-  { value, onChange, onSubmit, onArrowUp, onArrowDown, disabled, prompt },
+  { value, onChange, onSubmit, onArrowUp, onArrowDown, disabled, prompt, commandHistory = [] },
   ref
 ) {
   const localRef = useRef<HTMLInputElement>(null);
@@ -42,10 +43,17 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
       return;
     }
 
-    const matches = commands.filter(cmd => cmd.startsWith(trimmedValue));
-    setSuggestions(matches);
+    // Collect matches from commands and history, remove duplicates
+    const commandMatches = commands.filter(cmd => cmd.startsWith(trimmedValue));
+    const historyMatches = commandHistory.filter(cmd => 
+      cmd.toLowerCase().startsWith(trimmedValue) && !commandMatches.includes(cmd)
+    );
+
+    // Combine and deduplicate
+    const allMatches = [...new Set([...commandMatches, ...historyMatches])];
+    setSuggestions(allMatches);
     setSelectedIndex(-1);
-  }, [value]);
+  }, [value, commandHistory]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {

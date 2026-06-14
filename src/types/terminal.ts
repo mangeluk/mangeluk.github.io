@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export type Theme = 'dark' | 'light' | 'matrix';
+export type Theme = 'dark' | 'light' | 'matrix' | 'dracula' | 'nord' | 'monokai';
 
 export type Lang = 'es' | 'en';
 

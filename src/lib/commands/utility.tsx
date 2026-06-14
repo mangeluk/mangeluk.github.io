@@ -96,7 +96,7 @@ registerCommand({
 
 registerCommand({
   name: 'theme',
-  description: 'theme <dark|light|matrix|current> — Cambia o muestra el tema / Change or show current theme',
+  description: 'theme <dark|light|matrix|dracula|nord|monokai|current> — Cambia o muestra el tema / Change or show current theme',
   execute(args, ctx) {
     const value = args[0]?.toLowerCase();
 
@@ -113,8 +113,8 @@ registerCommand({
       return {
         type: 'error',
         content: ctx.lang === 'en'
-          ? `Invalid theme. Valid options: dark, light, matrix, current. Current: ${ctx.theme}`
-          : `Tema inválido. Opciones válidas: dark, light, matrix, current. Actual: ${ctx.theme}`,
+          ? `Invalid theme. Valid options: dark, light, matrix, dracula, nord, monokai, current. Current: ${ctx.theme}`
+          : `Tema inválido. Opciones válidas: dark, light, matrix, dracula, nord, monokai, current. Actual: ${ctx.theme}`,
       };
     }
 

@@ -14,6 +14,8 @@ import '@/lib/commands/help';
 import '@/lib/commands/content';
 import '@/lib/commands/utility';
 import '@/lib/commands/ai';
+import '@/lib/commands/filesystem';
+import '@/lib/commands/extras';
 import { resetConversationHistory } from '@/lib/commands/ai';
 
 import OutputLine from './OutputLine';
@@ -36,6 +38,10 @@ export default function Terminal() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
   const [aliases, setAliases] = useState<Record<string, string>>({});
+  // Nuevos estados globales
+  const [currentDir, setCurrentDirState] = useState<string>('~');
+  const sessionStatsStartTime = useRef(Date.now());
+  const [commandCount, setCommandCount] = useState(0);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -140,7 +146,7 @@ export default function Terminal() {
       const inputEntry: HistoryEntry = {
         id: genId(),
         type: 'input',
-        content: `visitor@portfolio:~$ ${rawInput}`,
+        content: `visitor@portfolio:${currentDir}$ ${rawInput}`,
         timestamp: Date.now(),
       };
 
@@ -152,9 +158,18 @@ export default function Terminal() {
         getHistory: () => history,
         getCommandHistory: () => commandHistory,
         getAliases: () => aliases,
-        setAliases
+        setAliases,
+        getCurrentDir: () => currentDir,
+        setCurrentDir: setCurrentDirState,
+        getSessionStats: () => ({
+          commandCount: commandCount,
+          startTime: sessionStatsStartTime.current
+        })
       };
       const result = resolveCommand(raw, ctx);
+
+      // Incrementar contador de comandos
+      setCommandCount(prev => prev + 1);
 
       // Check if this is a clear history command
       const isClearHistory = raw.toLowerCase() === 'clear history';
@@ -307,7 +322,8 @@ export default function Terminal() {
           onArrowUp={handleArrowUp}
           onArrowDown={handleArrowDown}
           disabled={isLoading}
-          prompt="visitor@portfolio:~$"
+          prompt={`visitor@portfolio:${currentDir}$`}
+          commandHistory={commandHistory}
         />
       </div>
     </div>

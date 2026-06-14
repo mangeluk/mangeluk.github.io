@@ -20,6 +20,10 @@ export interface CommandContext {
   getCommandHistory: () => string[];
   getAliases: () => Record<string, string>;
   setAliases: (aliases: Record<string, string>) => void;
+  // Estado global compartido para nuevas funcionalidades
+  getCurrentDir: () => string;
+  setCurrentDir: (dir: string) => void;
+  getSessionStats: () => { commandCount: number; startTime: number };
 }
 
 export type CommandResult =
@@ -33,7 +37,7 @@ export type CommandResult =
 export interface CommandDefinition {
   name: string;
   description: string;
-  execute: (args: string[], ctx: CommandContext) => CommandResult;
+  execute: (args: string[], ctx: CommandContext) => CommandResult | Promise<CommandResult>;
 }
 
 // ---------------------------------------------------------------------------
@@ -137,7 +141,22 @@ export function resolveCommand(raw: string, ctx: CommandContext): CommandResult 
       };
     }
 
-    return def.execute(args, ctx);
+    const result = def.execute(args, ctx);
+    
+    // Si es una promesa, envolverla en un async para que la terminal la maneje
+    if (result instanceof Promise) {
+      return {
+        type: 'async',
+        loader: 'Cargando...',
+        promise: result.then(r => {
+          if ('type' in r && r.type === 'text') return { text: r.content };
+          if ('type' in r && r.type === 'error') return { text: r.content };
+          return { text: '' };
+        })
+      };
+    }
+
+    return result;
   } catch {
     // Safety net: ensure we never propagate exceptions (Req. 1.9)
     return {

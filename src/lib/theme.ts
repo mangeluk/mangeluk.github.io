@@ -1,6 +1,6 @@
 import type { Theme, Lang } from '@/types/terminal';
 
-const VALID_THEMES: Theme[] = ['dark', 'light', 'matrix'];
+const VALID_THEMES: Theme[] = ['dark', 'light', 'matrix', 'dracula', 'nord', 'monokai'];
 const VALID_LANGS: Lang[] = ['es', 'en'];
 
 /**

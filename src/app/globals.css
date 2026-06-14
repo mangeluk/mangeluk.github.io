@@ -52,6 +52,72 @@
   text-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
 }
 
+/* Dracula theme */
+[data-theme="dracula"] {
+  --bg-terminal: rgba(40, 42, 54, 0.95);
+  --text-primary: #50fa7b;
+  --text-secondary: #bd93f9;
+  --text-error: #ff5555;
+  --text-warning: #ffb86c;
+  --text-input: #f8f8f2;
+  --cursor: #ff79c6;
+}
+
+/* Nord theme */
+[data-theme="nord"] {
+  --bg-terminal: rgba(46, 52, 64, 0.95);
+  --text-primary: #a3be8c;
+  --text-secondary: #81a1c1;
+  --text-error: #bf616a;
+  --text-warning: #ebcb8b;
+  --text-input: #eceff4;
+  --cursor: #88c0d0;
+}
+
+/* Monokai theme */
+[data-theme="monokai"] {
+  --bg-terminal: rgba(39, 40, 34, 0.95);
+  --text-primary: #a6e22e;
+  --text-secondary: #75715e;
+  --text-error: #f92672;
+  --text-warning: #e6db74;
+  --text-input: #f8f8f2;
+  --cursor: #66d9ef;
+}
+
+/* Monokai theme */
+[data-theme="monokai"] {
+  --bg-terminal: rgba(39, 40, 34, 0.95);
+  --text-primary: #a6e22e;
+  --text-secondary: #75715e;
+  --text-error: #f92672;
+  --text-warning: #e6db74;
+  --text-input: #f8f8f2;
+  --cursor: #66d9ef;
+}
+
+/* Dracula theme */
+[data-theme="dracula"] {
+  --bg-terminal: rgba(40, 42, 54, 0.95);
+  --text-primary: #50fa7b;
+  --text-secondary: #bd93f9;
+  --text-error: #ff5555;
+  --text-warning: #ffb86c;
+  --text-input: #f8f8f2;
+  --cursor: #ff79c6;
+}
+
+/* Nord theme */
+[data-theme="nord"] {
+  --bg-terminal: rgba(46, 52, 64, 0.95);
+  --text-primary: #a3be8c;
+  --text-secondary: #81a1c1;
+  --text-error: #bf616a;
+  --text-warning: #ebcb8b;
+  --text-input: #eceff4;
+  --cursor: #88c0d0;
+}
+
 /* Light theme improvements */
 [data-theme="light"] {
   --bg-terminal: rgba(255, 255, 255, 0.95);
