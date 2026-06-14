@@ -247,43 +247,77 @@ registerCommand({
     let location = 'Mar del Plata';
     if (args.length > 0) location = args.join(' ');
 
-    // Coordenadas por defecto de Mar del Plata
-    let lat = -38.0028;
-    let lon = -57.5576;
-
-    if (location.toLowerCase().includes('buenos aires')) {
-      lat = -34.6037;
-      lon = -58.3816;
-    }
-
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`;
-
     try {
-      const res = await fetch(url);
-      const data = await res.json();
-      const temp = data.current.temperature_2m;
-      const humidity = data.current.relative_humidity_2m;
-      const weatherCode = data.current.weather_code;
+      // Primero usamos geocoding para encontrar la ubicación
+      const geocodingUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=${ctx.lang}&format=json`;
+      const geoRes = await fetch(geocodingUrl);
+      const geoData = await geoRes.json();
+      
+      if (!geoData.results || geoData.results.length === 0) {
+        return { 
+          type: 'error', 
+          content: ctx.lang === 'es' 
+            ? `No se encontró la ubicación: ${location}` 
+            : `Location not found: ${location}` 
+        };
+      }
 
-      let weatherDesc = 'Despejado';
-      if (weatherCode >= 51 && weatherCode <= 67) weatherDesc = 'Lluvia';
-      else if (weatherCode >= 71 && weatherCode <= 86) weatherDesc = 'Nieve';
-      else if (weatherCode >= 95) weatherDesc = 'Tormenta';
+      const { latitude: lat, longitude: lon, name: foundLocation } = geoData.results[0];
+      const displayLocation = foundLocation || location;
 
-      const textEs = `Clima en ${location}
+      // Ahora obtenemos el clima con las coordenadas correctas
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`;
+      const weatherRes = await fetch(weatherUrl);
+      const weatherData = await weatherRes.json();
+      
+      const temp = weatherData.current.temperature_2m;
+      const humidity = weatherData.current.relative_humidity_2m;
+      const weatherCode = weatherData.current.weather_code;
+
+      // Mapeo de weather codes a descripciones (más completo)
+      const weatherDescriptions: Record<number, { es: string; en: string }> = {
+        0: { es: 'Despejado', en: 'Clear sky' },
+        1: { es: 'Mayormente despejado', en: 'Mainly clear' },
+        2: { es: 'Parcialmente nublado', en: 'Partly cloudy' },
+        3: { es: 'Nublado', en: 'Overcast' },
+        45: { es: 'Niebla', en: 'Fog' },
+        48: { es: 'Niebla con escarcha', en: 'Depositing rime fog' },
+        51: { es: 'Llovizna ligera', en: 'Light drizzle' },
+        53: { es: 'Llovizna moderada', en: 'Moderate drizzle' },
+        55: { es: 'Llovizna intensa', en: 'Dense drizzle' },
+        61: { es: 'Lluvia ligera', en: 'Slight rain' },
+        63: { es: 'Lluvia moderada', en: 'Moderate rain' },
+        65: { es: 'Lluvia intensa', en: 'Heavy rain' },
+        71: { es: 'Nieve ligera', en: 'Slight snow' },
+        73: { es: 'Nieve moderada', en: 'Moderate snow' },
+        75: { es: 'Nieve intensa', en: 'Heavy snow' },
+        77: { es: 'Granos de nieve', en: 'Snow grains' },
+        80: { es: 'Chubascos ligeros', en: 'Slight rain showers' },
+        81: { es: 'Chubascos moderados', en: 'Moderate rain showers' },
+        82: { es: 'Chubascos violentos', en: 'Violent rain showers' },
+        85: { es: 'Chubascos de nieve ligeros', en: 'Slight snow showers' },
+        86: { es: 'Chubascos de nieve intensos', en: 'Heavy snow showers' },
+        95: { es: 'Tormenta', en: 'Thunderstorm' },
+        96: { es: 'Tormenta con granizo ligero', en: 'Thunderstorm with slight hail' },
+        99: { es: 'Tormenta con granizo intenso', en: 'Thunderstorm with heavy hail' }
+      };
+
+      const weatherDesc = weatherDescriptions[weatherCode] || { es: 'Desconocido', en: 'Unknown' };
+
+      const textEs = `Clima en ${displayLocation}
 ================
 Temperatura: ${temp}°C
 Humedad: ${humidity}%
-Condiciones: ${weatherDesc}`;
-      const textEn = `Weather in ${location}
+Condiciones: ${weatherDesc.es}`;
+      const textEn = `Weather in ${displayLocation}
 ================
 Temperature: ${temp}°C
 Humidity: ${humidity}%
-Conditions: ${weatherDesc}`;
+Conditions: ${weatherDesc.en}`;
 
       return { type: 'text', content: ctx.lang === 'es' ? textEs : textEn };
     } catch (e) {
-      return { type: 'error', content: 'No se pudo obtener el clima' };
+      return { type: 'error', content: ctx.lang === 'es' ? 'No se pudo obtener el clima' : 'Could not get weather' };
     }
   },
 });

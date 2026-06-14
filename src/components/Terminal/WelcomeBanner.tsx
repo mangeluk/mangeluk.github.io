@@ -20,9 +20,6 @@ const TAGLINES: Record<Lang, string> = {
 export default function WelcomeBanner({ lang }: WelcomeBannerProps) {
   return (
     <div className="mb-4">
-      <h1 className="text-(--text-primary) text-xl font-bold">
-        Matias Angeluk
-      </h1>
       <p className="mt-2 text-(--text-secondary) text-sm">
         {TAGLINES[lang]}
       </p>

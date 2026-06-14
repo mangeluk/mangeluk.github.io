@@ -132,7 +132,7 @@
 /* ─── Base styles ───────────────────────────────────────────────────────────── */
 
 body {
-  background: #0a0a0a;
+  background-color: #0a0a0a;
   color: var(--text-primary);
   font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 }
@@ -160,4 +160,66 @@ body {
 .terminal-panel ::-webkit-scrollbar-thumb {
   background: var(--text-secondary);
   border-radius: 2px;
+}
+
+/* ─── Fade in animation ───────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* ─── Retro terminal border ────────────────────────────────────────────────── */
+.retro-terminal {
+  border: 3px solid var(--text-primary);
+  box-shadow: 
+    0 0 10px var(--text-primary),
+    inset 0 0 10px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 0, 0, 0.8);
+  border-radius: 8px;
+  position: relative;
+}
+
+.retro-terminal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+}
+
+/* ─── Scanline effect (optional retro touch) ───────────────────────────────── */
+.scanlines {
+  position: relative;
+}
+
+.scanlines::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 10;
 }

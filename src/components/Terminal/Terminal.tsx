@@ -42,6 +42,7 @@ export default function Terminal() {
   const [currentDir, setCurrentDirState] = useState<string>('~');
   const sessionStatsStartTime = useRef(Date.now());
   const [commandCount, setCommandCount] = useState(0);
+  const [currentTime, setCurrentTime] = useState<string>('');
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,6 +87,22 @@ export default function Terminal() {
       localStorage.setItem('terminal-aliases', JSON.stringify(aliases));
     } catch { /* ignore */ }
   }, [aliases]);
+
+  // ── Clock effect ──
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('es-ES', { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+      });
+      const timeStr = now.toLocaleTimeString('es-ES');
+      setCurrentTime(`${dateStr} • ${timeStr}`);
+    };
+    
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Scroll to bottom on every history change (Req. 1.5, 18.3) ──
   useEffect(() => {
@@ -287,9 +304,61 @@ export default function Terminal() {
     <div
       data-theme={theme}
       onClick={handlePanelClick}
-      className="terminal-panel flex flex-col h-[100dvh] md:h-[80vh] md:max-w-[900px] md:w-full md:mx-auto md:rounded-lg overflow-hidden"
+      className="terminal-panel fade-in flex flex-col h-full overflow-hidden rounded-lg shadow-2xl"
       style={{ backgroundColor: 'var(--bg-terminal)' }}
     >
+      {/* Window Title Bar */}
+      <div 
+        className="flex items-center justify-between px-4 py-3 border-b"
+        style={{ 
+          borderColor: 'var(--text-secondary)',
+          backgroundColor: 'rgba(0,0,0,0.3)'
+        }}
+      >
+        <div className="flex items-center gap-2">
+          {/* Window Buttons */}
+          <div className="flex gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500 cursor-pointer hover:bg-red-400" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500 cursor-pointer hover:bg-yellow-400" />
+            <div className="w-3 h-3 rounded-full bg-green-500 cursor-pointer hover:bg-green-400" />
+          </div>
+          <span className="text-sm ml-4" style={{ color: 'var(--text-secondary)' }}>
+            visitor@portfolio: {currentDir}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-xs md:text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {currentTime}
+          </div>
+        </div>
+      </div>
+
+      {/* Original Header */}
+      <div 
+        className="px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-2 border-b"
+        style={{ 
+          borderColor: 'var(--text-secondary)',
+          backgroundColor: 'rgba(0,0,0,0.1)'
+        }}
+      >
+        <div className="text-center md:text-left">
+          <h1 className="text-lg md:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            Matías Angeluk
+          </h1>
+          <div className="text-xs md:text-sm flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 mt-1" style={{ color: 'var(--text-secondary)' }}>
+            <a href="https://github.com/mangeluk" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              GitHub
+            </a>
+            <a href="https://linkedin.com/in/mangeluk" target="_blank" rel="noopener noreferrer" className="hover:underline">
+              LinkedIn
+            </a>
+            <a href="mailto:matiasangeluk@gmail.com" className="hover:underline">
+              Email
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* History area (Req. 22.2) */}
       <div
         role="log"
@@ -313,7 +382,7 @@ export default function Terminal() {
       <MobileKeyboard onCommand={handleSubmit} disabled={isLoading} />
 
       {/* Input area (Req. 1.1) */}
-      <div className="p-4 pt-0" style={{ borderTop: '1px solid var(--text-secondary)' }}>
+      <div className="p-4 pt-0 border-t" style={{ borderColor: 'var(--text-secondary)' }}>
         <InputLine
           ref={inputRef}
           value={inputValue}

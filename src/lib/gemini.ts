@@ -28,7 +28,7 @@ export async function askGemini(
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_KEY;
   if (!apiKey || apiKey.trim() === '') {
     throw new Error(
-      'API key no configurada. Agrega NEXT_PUBLIC_GEMINI_KEY a tu archivo .env.local.'
+      'Actualmente no disponible'
     );
   }
 
