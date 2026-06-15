@@ -11,6 +11,7 @@ import '@/lib/commands/utility';
 
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
+import { createMockContext } from '../utils';
 
 const MOBILE_SHORTCUTS = ['help', 'about', 'projects', 'contact', 'clear'] as const;
 
@@ -20,12 +21,7 @@ describe('Property 20: Mobile shortcut buttons behave identically to typing the 
       fc.property(
         fc.constantFrom(...MOBILE_SHORTCUTS),
         (cmd) => {
-          const ctx: CommandContext = {
-            lang: 'es',
-            theme: 'dark',
-            setTheme: () => {},
-            setLang: () => {},
-          };
+          const ctx = createMockContext();
 
           // Simulate button tap (passes cmd directly, same as handleSubmit)
           const shortcutResult = resolveCommand(cmd, ctx);

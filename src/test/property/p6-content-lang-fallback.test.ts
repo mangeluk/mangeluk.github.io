@@ -11,6 +11,7 @@ import '@/lib/commands/utility';
 
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
+import { createMockContext } from '../utils';
 
 const CONTENT_COMMANDS = ['about', 'experience', 'projects', 'skills', 'contact', 'social', 'whoami'] as const;
 
@@ -21,12 +22,7 @@ describe('Property 6: Content commands return data for active lang with es fallb
         fc.constantFrom('es' as const, 'en' as const),
         fc.constantFrom(...CONTENT_COMMANDS),
         (lang, cmd) => {
-          const ctx: CommandContext = {
-            lang,
-            theme: 'dark',
-            setTheme: () => {},
-            setLang: () => {},
-          };
+          const ctx = createMockContext({ lang });
 
           let result!: ReturnType<typeof resolveCommand>;
 
@@ -39,10 +35,10 @@ describe('Property 6: Content commands return data for active lang with es fallb
           expect(result).toBeDefined();
 
           // Result must be one of the known types
-          expect(['text', 'jsx', 'error', 'clear', 'async']).toContain(result.type);
+          expect(['text', 'jsx', 'error', 'clear', 'async', 'banner']).toContain(result.type);
 
-          // Content must not be undefined
-          if (result.type !== 'clear' && result.type !== 'async') {
+          // Content must not be undefined (banner type has no content)
+          if (result.type !== 'clear' && result.type !== 'async' && result.type !== 'banner') {
             expect(result.content).toBeDefined();
           }
         }

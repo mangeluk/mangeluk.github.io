@@ -12,6 +12,7 @@ import '@/lib/commands/utility';
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
 import type { HistoryEntry } from '@/types/terminal';
+import { createMockContext } from '../utils';
 
 function genId() {
   return Math.random().toString(36).slice(2);
@@ -66,12 +67,7 @@ function simulateSubmit(
 
 describe('Property 1: Submitting a non-empty command grows the history', () => {
   it('adds exactly 2 entries (echo + output) for non-clear commands', () => {
-    const ctx: CommandContext = {
-      lang: 'es',
-      theme: 'dark',
-      setTheme: () => {},
-      setLang: () => {},
-    };
+    const ctx = createMockContext();
 
     fc.assert(
       fc.property(

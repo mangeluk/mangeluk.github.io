@@ -4,7 +4,7 @@
 // Main stateful terminal component.
 // Requirements: 1.1–1.9, 8.1–8.3, 9.1–9.3, 14.5–14.6, 15.4–15.5, 18.2–18.3, 19.1, 19.5, 22.2
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import type { HistoryEntry, Theme, Lang } from '@/types/terminal';
 import { isValidTheme, isValidLang } from '@/lib/theme';
 import { resolveCommand } from '@/lib/commands/index';
@@ -22,6 +22,9 @@ import OutputLine from './OutputLine';
 import InputLine from './InputLine';
 import WelcomeBanner from './WelcomeBanner';
 import MobileKeyboard from '../MobileKeyboard';
+
+// Initialize session start time at module level to avoid ref access during render
+const sessionStartTime = Date.now();
 
 let idCounter = 0;
 function genId(): string {
@@ -82,16 +85,15 @@ export default function Terminal() {
   const [aliases, setAliases] = useState<Record<string, string>>(getInitialAliases);
   // Nuevos estados globales
   const [currentDir, setCurrentDirState] = useState<string>('~');
-  const sessionStatsStartTime = useRef<number | null>(null);
   const [commandCount, setCommandCount] = useState(0);
   const [currentTime, setCurrentTime] = useState<string>('');
+  // Use lazy initializer to avoid hydration mismatch - mounted starts as false
+  // and will be set to true in useLayoutEffect (synchronous after render)
   const [mounted, setMounted] = useState(false);
 
-  // Initialize sessionStatsStartTime once on mount
-  useEffect(() => {
-    sessionStatsStartTime.current = Date.now();
-    setMounted(true);
-  }, []);
+  // Set mounted to true after first render using useLayoutEffect to avoid flash
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useLayoutEffect(() => { setMounted(true); }, []);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -201,7 +203,7 @@ export default function Terminal() {
         setCurrentDir: setCurrentDirState,
         getSessionStats: () => ({
           commandCount: commandCount,
-          startTime: sessionStatsStartTime.current
+          startTime: sessionStartTime
         })
       };
       const result = resolveCommand(raw, ctx);

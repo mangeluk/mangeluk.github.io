@@ -12,6 +12,7 @@ import '@/lib/commands/utility';
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
 import type { HistoryEntry } from '@/types/terminal';
+import { createMockContext } from '../utils';
 
 const historyEntryArbitrary: fc.Arbitrary<HistoryEntry> = fc.record({
   id: fc.uuid(),
@@ -26,12 +27,7 @@ describe('Property 11: banner always appends without removing existing history',
       fc.property(
         fc.array(historyEntryArbitrary),
         (history) => {
-          const ctx: CommandContext = {
-            lang: 'es',
-            theme: 'dark',
-            setTheme: () => {},
-            setLang: () => {},
-          };
+          const ctx = createMockContext();
 
           const result = resolveCommand('banner', ctx);
 

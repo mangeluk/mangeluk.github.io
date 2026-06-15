@@ -8,6 +8,7 @@ import '@/lib/commands/utility';
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
 import type { Theme, Lang, HistoryEntry } from '@/types/terminal';
+import { createMockContext } from '../utils';
 
 const historyEntryArbitrary: fc.Arbitrary<HistoryEntry> = fc.record({
   id: fc.uuid(),
@@ -27,12 +28,12 @@ describe('Property 10: clear resets history regardless of its prior size', () =>
           let capturedTheme: Theme = theme;
           let capturedLang: Lang = lang;
 
-          const ctx: CommandContext = {
-            lang,
-            theme,
+          const ctx = createMockContext({ 
+            lang, 
+            theme, 
             setTheme: (t) => { capturedTheme = t; },
             setLang: (l) => { capturedLang = l; },
-          };
+          });
 
           const result = resolveCommand('clear', ctx);
 

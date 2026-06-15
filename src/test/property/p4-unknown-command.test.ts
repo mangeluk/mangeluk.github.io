@@ -1,20 +1,16 @@
 // Feature: terminal-portfolio, Property 4: Unknown commands never throw, always show an error
 // Requirements: 1.9, 16.1
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import * as fc from 'fast-check';
 
 // We need a fresh registry for each test run so registered commands don't interfere.
 // Import resolveCommand and registerCommand from the registry.
-import { resolveCommand, registerCommand, getRegistry } from '@/lib/commands/index';
+import { resolveCommand, getRegistry } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
+import { createMockContext } from '../utils';
 
-const ctx: CommandContext = {
-  lang: 'es',
-  theme: 'dark',
-  setTheme: () => {},
-  setLang: () => {},
-};
+const ctx = createMockContext();
 
 describe('Property 4: Unknown commands never throw, always show an error', () => {
   it('returns an error result for any string not matching a registered command', () => {

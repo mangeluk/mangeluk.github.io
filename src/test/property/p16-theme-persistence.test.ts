@@ -8,6 +8,7 @@ import '@/lib/commands/utility';
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
 import { isValidTheme } from '@/lib/theme';
+import { createMockContext } from '../utils';
 
 // jsdom provides localStorage globally
 describe('Property 16: Theme preference persists and restores across sessions', () => {
@@ -22,12 +23,10 @@ describe('Property 16: Theme preference persists and restores across sessions', 
         (theme) => {
           localStorage.clear();
 
-          const ctx: CommandContext = {
+          const ctx = createMockContext({
             lang: 'es',
             theme: 'dark',
-            setTheme: () => {},
-            setLang: () => {},
-          };
+          });
 
           resolveCommand(`theme ${theme}`, ctx);
 

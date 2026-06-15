@@ -8,6 +8,7 @@ import '@/lib/commands/utility';
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
 import { isValidLang } from '@/lib/theme';
+import { createMockContext } from '../utils';
 
 describe('Property 17: Lang preference persists and restores across sessions', () => {
   beforeEach(() => {
@@ -21,12 +22,10 @@ describe('Property 17: Lang preference persists and restores across sessions', (
         (lang) => {
           localStorage.clear();
 
-          const ctx: CommandContext = {
+          const ctx = createMockContext({
             lang: 'es',
             theme: 'dark',
-            setTheme: () => {},
-            setLang: () => {},
-          };
+          });
 
           resolveCommand(`lang ${lang}`, ctx);
 

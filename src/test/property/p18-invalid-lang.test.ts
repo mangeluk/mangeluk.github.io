@@ -8,6 +8,7 @@ import '@/lib/commands/utility';
 import { resolveCommand } from '@/lib/commands/index';
 import type { CommandContext } from '@/lib/commands/index';
 import type { Lang } from '@/types/terminal';
+import { createMockContext } from '../utils';
 
 const VALID_LANGS = ['es', 'en'];
 
@@ -20,12 +21,11 @@ describe('Property 18: Invalid lang argument does not change the active lang', (
         (invalidCode, currentLang) => {
           let capturedLang: Lang = currentLang;
 
-          const ctx: CommandContext = {
+          const ctx = createMockContext({
             lang: currentLang,
             theme: 'dark',
-            setTheme: () => {},
             setLang: (l) => { capturedLang = l; },
-          };
+          });
 
           const result = resolveCommand(`lang ${invalidCode}`, ctx);
 
