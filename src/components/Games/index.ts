@@ -4,3 +4,7 @@ export { default as Game2048 } from './Game2048';
 export { default as PongGame } from './PongGame';
 export { default as QuizGame } from './QuizGame';
 export { default as DoomGame } from './DoomGame';
+export { default as MinesweeperGame } from './Minesweeper';
+export { default as BreakoutGame } from './Breakout';
+export { default as FlappyBirdGame } from './FlappyBird';
+export { default as ChessGame } from './Chess';

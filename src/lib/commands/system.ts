@@ -128,14 +128,7 @@ registerCommand({
   },
 });
 
-// whoami - enhanced
-registerCommand({
-  name: 'whoami',
-  description: 'Muestra el usuario actual / Show current user',
-  execute(_args, ctx) {
-    return { type: 'text', content: 'visitor' };
-  },
-});
+// whoami removed — kept in content.tsx (richer profile bio)
 
 // groups - user groups
 registerCommand({
@@ -182,46 +175,7 @@ registerCommand({
   },
 });
 
-// date - enhanced with format support
-registerCommand({
-  name: 'date',
-  description: 'Muestra fecha y hora / Show date and time: date [format]',
-  execute(args, ctx) {
-    const now = new Date();
-
-    // Check for format string
-    if (args.length > 0 && args[0].startsWith('+')) {
-      const fmt = args[0].slice(1);
-      let result = fmt;
-      result = result.replace(/%Y/g, String(now.getFullYear()));
-      result = result.replace(/%m/g, String(now.getMonth() + 1).padStart(2, '0'));
-      result = result.replace(/%d/g, String(now.getDate()).padStart(2, '0'));
-      result = result.replace(/%H/g, String(now.getHours()).padStart(2, '0'));
-      result = result.replace(/%M/g, String(now.getMinutes()).padStart(2, '0'));
-      result = result.replace(/%S/g, String(now.getSeconds()).padStart(2, '0'));
-      result = result.replace(/%A/g, now.toLocaleDateString('en-US', { weekday: 'long' }));
-      result = result.replace(/%a/g, now.toLocaleDateString('en-US', { weekday: 'short' }));
-      result = result.replace(/%B/g, now.toLocaleDateString('en-US', { month: 'long' }));
-      result = result.replace(/%b/g, now.toLocaleDateString('en-US', { month: 'short' }));
-      result = result.replace(/%T/g, `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
-      result = result.replace(/%Z/g, 'ART');
-      result = result.replace(/%z/g, '-0300');
-      return { type: 'text', content: result };
-    }
-
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      timeZoneName: 'short',
-    };
-    return { type: 'text', content: now.toLocaleString('en-US', options) };
-  },
-});
+// date removed — kept in utility.tsx (localized + format strings)
 
 // free - memory info
 registerCommand({

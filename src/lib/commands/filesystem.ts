@@ -317,7 +317,7 @@ deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free
 vendor_id\t: GenuineIntel
 cpu family\t: 6
 model\t\t: 142
-model name\t: Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+model name\t: Intel(R) Core(TM) i7-12700K CPU @ 3.60GHz
 stepping\t: 10
 microcode\t: 0xca
 cpu MHz\t\t: 1800.000
@@ -478,7 +478,7 @@ End-Date: 2024-01-15  10:00:15`
 };
 
 // Helper para resolver rutas
-function resolvePath(path: string, currentDir: string): string {
+export function resolvePath(path: string, currentDir: string): string {
   let fullPath: string;
   if (path.startsWith('~')) {
     fullPath = path;
@@ -513,6 +513,13 @@ function getEntry(path: string): FileSystemEntry | null {
     if (!current) return null;
   }
   return current;
+}
+
+// Helper para listar nombres de hijos de un directorio
+export function listDir(path: string): string[] {
+  const entry = getEntry(path);
+  if (!entry || entry.type !== 'dir' || !entry.children) return [];
+  return Object.keys(entry.children);
 }
 
 // Comando pwd

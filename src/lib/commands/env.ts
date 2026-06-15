@@ -169,47 +169,7 @@ registerCommand({
   },
 });
 
-// alias - create/list aliases (enhanced version)
-registerCommand({
-  name: 'alias',
-  description: 'Crea o lista aliases / Create or list aliases: alias [name=command]',
-  execute(args, ctx) {
-    const aliases = ctx.getAliases();
-    const entries = Object.entries(aliases);
-
-    if (args.length === 0) {
-      if (entries.length === 0) {
-        return { type: 'text', content: '' };
-      }
-      const lines = entries.map(([k, v]) => `alias ${k}='${v}'`);
-      return { type: 'text', content: lines.join('\n') };
-    }
-
-    const assignment = args.join(' ');
-    const eqIndex = assignment.indexOf('=');
-    if (eqIndex === -1) {
-      // Show specific alias
-      const val = aliases[assignment];
-      if (val) {
-        return { type: 'text', content: `alias ${assignment}='${val}'` };
-      }
-      return {
-        type: 'error',
-        content: ctx.lang === 'es'
-          ? `bash: alias: ${assignment}: no se encontró`
-          : `bash: alias: ${assignment}: not found`
-      };
-    }
-
-    const name = assignment.slice(0, eqIndex);
-    let command = assignment.slice(eqIndex + 1);
-    if ((command.startsWith('"') && command.endsWith('"')) || (command.startsWith("'") && command.endsWith("'"))) {
-      command = command.slice(1, -1);
-    }
-    ctx.setAliases({ ...ctx.getAliases(), [name]: command });
-    return { type: 'text', content: '' };
-  },
-});
+// alias removed — kept in utility.tsx (better UX with ctx.getAliases)
 
 // unalias - remove alias
 registerCommand({

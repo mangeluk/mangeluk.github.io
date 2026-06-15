@@ -27,15 +27,25 @@ import DesktopIcon from './DesktopIcon';
 import Taskbar from './Taskbar';
 import ContentWindow from './ContentWindow';
 import StartMenu from './StartMenu';
+import ContextMenu from './ContextMenu';
 import { SnakeGame } from '../Games';
 import { TetrisGame } from '../Games';
 import { Game2048 } from '../Games';
 import { PongGame } from '../Games';
 import { QuizGame } from '../Games';
 import { DoomGame } from '../Games';
+import { MinesweeperGame } from '../Games';
+import { BreakoutGame } from '../Games';
+import { FlappyBirdGame } from '../Games';
+import { ChessGame } from '../Games';
 import { CalculatorApp } from '../Utilities';
 import { NotepadApp } from '../Utilities';
 import { WeatherApp } from '../Utilities';
+import { SettingsApp } from '../Utilities';
+import { FileManagerApp } from '../Utilities';
+import { CalendarApp } from '../Utilities';
+import { SystemMonitorApp } from '../Utilities';
+import { MusicPlayerApp } from '../Utilities';
 
 interface DesktopWindow {
   id: string;
@@ -49,9 +59,9 @@ interface DesktopWindow {
   /** Command to auto-submit when terminal opens */
   initialCommand?: string;
   /** If set, window renders a game */
-  gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom';
+  gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess';
   /** If set, window renders a utility app */
-  utilityType?: 'calculator' | 'notepad' | 'weather';
+  utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer';
 }
 
 const DESKTOP_ICONS = [
@@ -70,12 +80,21 @@ const GAME_ICONS: Record<string, { icon: string; label: string }> = {
   pong: { icon: '🏓', label: 'Pong' },
   quiz: { icon: '❓', label: 'Quiz' },
   doom: { icon: '👹', label: 'Doom' },
+  minesweeper: { icon: '💣', label: 'Minesweeper' },
+  breakout: { icon: '🧱', label: 'Breakout' },
+  flappybird: { icon: '🐦', label: 'Flappy Bird' },
+  chess: { icon: '♟️', label: 'Chess' },
 };
 
 const UTILITY_ICONS: Record<string, { icon: string; label: string }> = {
   calculator: { icon: '🧮', label: 'Calculator' },
   notepad: { icon: '📝', label: 'Notepad' },
   weather: { icon: '🌤️', label: 'Weather' },
+  settings: { icon: '⚙️', label: 'Settings' },
+  filemanager: { icon: '📁', label: 'File Manager' },
+  calendar: { icon: '📅', label: 'Calendar' },
+  sysmonitor: { icon: '📊', label: 'System Monitor' },
+  musicplayer: { icon: '🎵', label: 'Music Player' },
 };
 
 export default function Desktop() {
@@ -110,6 +129,7 @@ export default function Desktop() {
   const [activeWindowId, setActiveWindowId] = useState<string>('terminal');
   const [zCounter, setZCounter] = useState(100);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
@@ -129,8 +149,8 @@ export default function Desktop() {
   const openWindow = useCallback((
     id: string,
     contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact',
-    gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom',
-    utilityType?: 'calculator' | 'notepad' | 'weather',
+    gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess',
+    utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer',
   ) => {
     setWindows((prev) => {
       const existing = prev.find((w) => w.id === id);
@@ -200,12 +220,33 @@ export default function Desktop() {
   const handleDesktopClick = useCallback((e: React.MouseEvent) => {
     // Don't close start menu if clicking on taskbar or start menu itself
     const target = e.target as HTMLElement;
-    if (target.closest('.os-taskbar') || target.closest('.start-menu') || target.closest('.start-menu-backdrop')) {
+    if (target.closest('.os-taskbar') || target.closest('.start-menu') || target.closest('.start-menu-backdrop') || target.closest('.os-context-menu')) {
       return;
     }
     setActiveWindowId('');
     setStartMenuOpen(false);
   }, []);
+
+  const handleDesktopContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const target = e.target as HTMLElement;
+    if (target.closest('.os-taskbar') || target.closest('.start-menu')) {
+      return;
+    }
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleContextNewTerminal = useCallback(() => {
+    openWindow('terminal');
+  }, [openWindow]);
+
+  const handleContextChangeWallpaper = useCallback(() => {
+    openWindow('settings-wallpaper', 'about');
+  }, [openWindow]);
+
+  const handleContextAbout = useCallback(() => {
+    openWindow('about', 'about');
+  }, [openWindow]);
 
   const handleIconDoubleClick = useCallback((iconId: string, contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact') => {
     if (iconId === 'terminal') {
@@ -239,11 +280,11 @@ export default function Desktop() {
     if (type === 'terminal') {
       openWindow('terminal');
     } else if (type === 'game') {
-      openWindow(id, undefined, id as 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom');
+      openWindow(id, undefined, id as 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess');
     } else if (type === 'content' && contentType) {
       openWindow(id, contentType as 'about' | 'projects' | 'skills' | 'experience' | 'contact');
     } else if (type === 'utility') {
-      openWindow(id, undefined, undefined, id as 'calculator' | 'notepad' | 'weather');
+      openWindow(id, undefined, undefined, id as 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer');
     }
   }, [openWindow]);
 
@@ -255,6 +296,10 @@ export default function Desktop() {
       case 'pong': return <PongGame />;
       case 'quiz': return <QuizGame lang={lang} />;
       case 'doom': return <DoomGame />;
+      case 'minesweeper': return <MinesweeperGame />;
+      case 'breakout': return <BreakoutGame />;
+      case 'flappybird': return <FlappyBirdGame />;
+      case 'chess': return <ChessGame />;
       default: return <div>Game not found</div>;
     }
   }, [lang]);
@@ -264,12 +309,17 @@ export default function Desktop() {
       case 'calculator': return <CalculatorApp />;
       case 'notepad': return <NotepadApp />;
       case 'weather': return <WeatherApp />;
+      case 'settings': return <SettingsApp theme={theme} lang={lang} setTheme={(t) => setTheme(t as Theme)} setLang={(l) => setLang(l as Lang)} />;
+      case 'filemanager': return <FileManagerApp />;
+      case 'calendar': return <CalendarApp />;
+      case 'sysmonitor': return <SystemMonitorApp />;
+      case 'musicplayer': return <MusicPlayerApp />;
       default: return <div>App not found</div>;
     }
-  }, []);
+  }, [theme, lang, setTheme, setLang]);
 
   return (
-    <div className="os-desktop" onClick={handleDesktopClick}>
+    <div className="os-desktop" onClick={handleDesktopClick} onContextMenu={handleDesktopContextMenu}>
       {/* Desktop icons */}
       <div className="os-desktop__icons">
         {DESKTOP_ICONS.map((iconDef) => (
@@ -345,6 +395,18 @@ export default function Desktop() {
         onStartClick={() => setStartMenuOpen((o) => !o)}
         isStartMenuOpen={startMenuOpen}
       />
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onNewTerminal={handleContextNewTerminal}
+          onChangeWallpaper={handleContextChangeWallpaper}
+          onAbout={handleContextAbout}
+        />
+      )}
     </div>
   );
 }

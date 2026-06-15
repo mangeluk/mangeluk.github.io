@@ -447,22 +447,7 @@ registerCommand({
   }
 });
 
-// ------------------------------
-// Comando sudo (easter egg)
-// ------------------------------
-registerCommand({
-  name: 'sudo',
-  description: 'Modo superusuario (easter egg)',
-  execute(args) {
-    if (args.length === 0) {
-      return { type: 'text', content: 'Uso: sudo <comando>. Pero... ¿seguro?' };
-    }
-    return {
-      type: 'text',
-      content: `Acceso denegado. ¡No eres root aquí! 😉`
-    };
-  }
-});
+
 
 // ------------------------------
 // Comando hack (easter egg)

@@ -182,8 +182,8 @@ registerCommand({
 
 // Export terminal history to a text file
 registerCommand({
-  name: 'export',
-  description: 'export — Descarga el historial de la terminal como archivo .txt / Export terminal history to a .txt file',
+  name: 'export-history',
+  description: 'export-history — Descarga el historial de la terminal como archivo .txt / Export terminal history to a .txt file',
   execute(_args, ctx) {
     const history = ctx.getHistory();
     
@@ -325,9 +325,28 @@ registerCommand({
 // Date command
 registerCommand({
   name: 'date',
-  description: 'date — Muestra fecha y hora actual / Show current date and time',
-  execute(_args, ctx) {
+  description: 'date — Muestra fecha y hora actual / Show current date and time: date [+format]',
+  execute(args, ctx) {
     const now = new Date();
+
+    // Support format strings like date +%Y-%m-%d
+    if (args.length > 0 && args[0].startsWith('+')) {
+      const fmt = args[0].slice(1);
+      let result = fmt;
+      result = result.replace(/%Y/g, String(now.getFullYear()));
+      result = result.replace(/%m/g, String(now.getMonth() + 1).padStart(2, '0'));
+      result = result.replace(/%d/g, String(now.getDate()).padStart(2, '0'));
+      result = result.replace(/%H/g, String(now.getHours()).padStart(2, '0'));
+      result = result.replace(/%M/g, String(now.getMinutes()).padStart(2, '0'));
+      result = result.replace(/%S/g, String(now.getSeconds()).padStart(2, '0'));
+      result = result.replace(/%A/g, now.toLocaleDateString(ctx.lang === 'es' ? 'es-ES' : 'en-US', { weekday: 'long' }));
+      result = result.replace(/%a/g, now.toLocaleDateString(ctx.lang === 'es' ? 'es-ES' : 'en-US', { weekday: 'short' }));
+      result = result.replace(/%B/g, now.toLocaleDateString(ctx.lang === 'es' ? 'es-ES' : 'en-US', { month: 'long' }));
+      result = result.replace(/%b/g, now.toLocaleDateString(ctx.lang === 'es' ? 'es-ES' : 'en-US', { month: 'short' }));
+      result = result.replace(/%T/g, `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
+      return { type: 'text', content: result };
+    }
+
     const options: Intl.DateTimeFormatOptions = {
       weekday: 'long',
       year: 'numeric',

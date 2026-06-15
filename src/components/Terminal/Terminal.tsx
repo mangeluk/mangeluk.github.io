@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
 import type { HistoryEntry, Theme, Lang } from '@/types/terminal';
 import { isValidTheme, isValidLang } from '@/lib/theme';
-import { resolveCommand } from '@/lib/commands/index';
+import { resolveCommand, type CommandContext, type CommandResult } from '@/lib/commands/index';
 import { resetConversationHistory } from '@/lib/commands/ai';
 
 // Import all command modules to register them via side effects
@@ -31,6 +31,73 @@ import MobileKeyboard from '../MobileKeyboard';
 
 // Initialize session start time at module level to avoid ref access during render
 const sessionStartTime = Date.now();
+
+// ── Pipe execution helper ──
+// Executes a series of piped commands, passing output from one to the next
+function executePipe(
+  commands: string[],
+  ctx: CommandContext,
+): CommandResult {
+  let currentInput = '';
+
+  for (let i = 0; i < commands.length; i++) {
+    const cmd = commands[i].trim();
+    if (!cmd) continue;
+
+    // For commands after the first, prepend the piped input as a special argument
+    let finalCmd = cmd;
+    if (currentInput && i > 0) {
+      // Append piped input as if it were a file argument or stdin
+      // Commands that accept piped input will read from it
+      finalCmd = `${cmd} "${currentInput.replace(/"/g, '\\"')}"`;
+    }
+
+    const result = resolveCommand(finalCmd, ctx);
+
+    // Handle async results - chain them through pipes
+    if (result.type === 'async') {
+      // For async results in a pipe, we need to wait for the promise
+      // Create a new async result that chains through remaining commands
+      const remainingCommands = commands.slice(i + 1);
+      if (remainingCommands.length === 0) {
+        return result; // Last command, return as-is
+      }
+      // Chain the remaining commands after the async resolves
+      return {
+        type: 'async',
+        loader: result.loader,
+        promise: result.promise.then(() => {
+          // Execute remaining commands with the resolved text
+          const nextResult = executePipe(
+            remainingCommands,
+            { ...ctx, getCurrentDir: () => ctx.getCurrentDir() },
+          );
+          if (nextResult.type === 'text') return { text: nextResult.content };
+          if (nextResult.type === 'error') return { text: nextResult.content };
+          if (nextResult.type === 'jsx') return { text: '' };
+          return { text: '' };
+        }),
+      };
+    }
+
+    // Extract text output from the result
+    if (result.type === 'text') {
+      currentInput = result.content;
+    } else if (result.type === 'error') {
+      return result; // Return error immediately
+    } else if (result.type === 'jsx') {
+      // JSX results don't produce text for piping, return them directly
+      return result;
+    } else if (result.type === 'clear') {
+      return result;
+    } else if (result.type === 'banner') {
+      return result;
+    }
+  }
+
+  // Return the final output as text
+  return { type: 'text', content: currentInput };
+}
 
 let idCounter = 0;
 function genId(): string {
@@ -130,7 +197,6 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
   const [mounted, setMounted] = useState(false);
   const [initialCommandSent, setInitialCommandSent] = useState(false);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useLayoutEffect(() => { setMounted(true); }, []);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -245,7 +311,12 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
           startTime: sessionStartTime
         })
       };
-      const result = resolveCommand(raw, ctx);
+
+      // Check for pipe operator and execute accordingly
+      const hasPipe = raw.includes('|');
+      const result = hasPipe
+        ? executePipe(raw.split('|'), ctx)
+        : resolveCommand(raw, ctx);
 
       setCommandCount(prev => prev + 1);
 
@@ -253,7 +324,12 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
 
       setInputValue('');
       if (!isClearHistory) {
-        setCommandHistory((prev) => [...prev, raw]);
+        // Don't add empty commands or duplicate consecutive commands to history
+        setCommandHistory((prev) => {
+          if (!raw || raw.trim() === '') return prev;
+          if (prev.length > 0 && prev[prev.length - 1] === raw) return prev;
+          return [...prev, raw];
+        });
       } else {
         setCommandHistory([]);
         try { localStorage.removeItem('terminal-cmd-history'); } catch {}

@@ -6,6 +6,7 @@
 
 import React, { useRef, useEffect, forwardRef, useState } from 'react';
 import { getAvailableCommands } from '@/lib/commands/index';
+import { resolvePath, listDir } from '@/lib/commands/filesystem';
 
 interface InputLineProps {
   value: string;
@@ -140,9 +141,10 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
 
   function handleAutocomplete() {
     const commands = getAvailableCommands();
-    const trimmedValue = value.trim().toLowerCase();
+    const trimmedValue = value.trim();
     if (trimmedValue === '') return;
 
+    // If a suggestion is selected, use it
     if (selectedIndex >= 0 && suggestions[selectedIndex]) {
       onChange(suggestions[selectedIndex]);
       setSuggestions([]);
@@ -150,22 +152,80 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
       return;
     }
 
-    const matches = commands.filter(cmd => cmd.startsWith(trimmedValue));
-    if (matches.length === 0) return;
+    // Split input into parts to detect if we're completing a path
+    const parts = trimmedValue.split(' ');
+    const isFirstWord = parts.length <= 1;
 
-    if (matches.length === 1) {
-      onChange(matches[0]);
-      setSuggestions([]);
-    } else {
-      let prefix = matches[0];
-      for (let i = 1; i < matches.length; i++) {
-        while (!matches[i].startsWith(prefix)) {
-          prefix = prefix.slice(0, -1);
+    if (isFirstWord) {
+      // Command completion
+      const cmdLower = trimmedValue.toLowerCase();
+      const matches = commands.filter(cmd => cmd.startsWith(cmdLower));
+      if (matches.length === 0) return;
+
+      if (matches.length === 1) {
+        onChange(matches[0] + ' ');
+        setSuggestions([]);
+      } else {
+        let prefix = matches[0];
+        for (let i = 1; i < matches.length; i++) {
+          while (!matches[i].startsWith(prefix)) {
+            prefix = prefix.slice(0, -1);
+          }
+          if (prefix === '') break;
         }
-        if (prefix === '') break;
+        if (prefix.length > cmdLower.length) {
+          onChange(prefix);
+        }
       }
-      if (prefix.length > trimmedValue.length) {
-        onChange(prefix);
+    } else {
+      // Path completion
+      const currentDir = '~';
+      const pathPart = parts[parts.length - 1];
+      const dirSeparator = pathPart.lastIndexOf('/');
+      let dirPath: string;
+      let prefix: string;
+
+      if (dirSeparator >= 0) {
+        dirPath = resolvePath(pathPart.slice(0, dirSeparator + 1) || '~', currentDir);
+        prefix = pathPart.slice(dirSeparator + 1);
+      } else {
+        dirPath = currentDir;
+        prefix = pathPart;
+      }
+
+      const entries = listDir(dirPath);
+      const matches = entries.filter(e => e.toLowerCase().startsWith(prefix.toLowerCase()));
+
+      if (matches.length === 0) return;
+
+      if (matches.length === 1) {
+        const completed = matches[0];
+        const newParts = [...parts.slice(0, -1)];
+        if (dirSeparator >= 0) {
+          newParts.push(pathPart.slice(0, dirSeparator + 1) + completed);
+        } else {
+          newParts.push(completed);
+        }
+        onChange(newParts.join(' '));
+        setSuggestions([]);
+      } else {
+        // Find common prefix
+        let commonPrefix = matches[0];
+        for (let i = 1; i < matches.length; i++) {
+          while (!matches[i].startsWith(commonPrefix)) {
+            commonPrefix = commonPrefix.slice(0, -1);
+          }
+          if (commonPrefix === '') break;
+        }
+        if (commonPrefix.length > prefix.length) {
+          const newParts = [...parts.slice(0, -1)];
+          if (dirSeparator >= 0) {
+            newParts.push(pathPart.slice(0, dirSeparator + 1) + commonPrefix);
+          } else {
+            newParts.push(commonPrefix);
+          }
+          onChange(newParts.join(' '));
+        }
       }
     }
   }
