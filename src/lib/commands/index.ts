@@ -69,6 +69,13 @@ export function getAvailableCommands(): string[] {
 }
 
 // ---------------------------------------------------------------------------
+// Command modules — importing each file registers its commands via side effects.
+// NOTE: These imports must NOT be in this file because the command modules
+// import registerCommand from this file, creating a circular dependency.
+// They are imported in Terminal.tsx instead.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Command parsing helpers
 // ---------------------------------------------------------------------------
 

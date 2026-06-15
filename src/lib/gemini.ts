@@ -66,7 +66,7 @@ ${JSON.stringify(profileData, null, 2)}`;
         contents,
       }),
     });
-  } catch (networkError) {
+  } catch {
     // Req. 13.4: distinguish network errors from HTTP errors
     throw new Error('Error de red: no se pudo conectar con la IA. Verifica tu conexión a internet.');
   }

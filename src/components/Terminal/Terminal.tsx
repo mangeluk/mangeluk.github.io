@@ -8,15 +8,21 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from
 import type { HistoryEntry, Theme, Lang } from '@/types/terminal';
 import { isValidTheme, isValidLang } from '@/lib/theme';
 import { resolveCommand } from '@/lib/commands/index';
+import { resetConversationHistory } from '@/lib/commands/ai';
 
-// Import command modules to register all commands via side effects
+// Import all command modules to register them via side effects
 import '@/lib/commands/help';
 import '@/lib/commands/content';
 import '@/lib/commands/utility';
 import '@/lib/commands/ai';
 import '@/lib/commands/filesystem';
 import '@/lib/commands/extras';
-import { resetConversationHistory } from '@/lib/commands/ai';
+import '@/lib/commands/env';
+import '@/lib/commands/system';
+import '@/lib/commands/process';
+import '@/lib/commands/fileops';
+import '@/lib/commands/textproc';
+import '@/lib/commands/packages';
 
 import OutputLine from './OutputLine';
 import InputLine from './InputLine';
@@ -330,27 +336,19 @@ export default function Terminal() {
       style={{ backgroundColor: 'var(--bg-terminal)' }}
       suppressHydrationWarning
     >
-      {/* Window Title Bar */}
+      {/* Window Title Bar — Linux-style */}
       <div 
-        className="flex items-center justify-between px-4 py-3 border-b"
+        className="flex items-center justify-between px-4 py-2 border-b"
         style={{ 
           borderColor: 'var(--text-secondary)',
-          backgroundColor: 'rgba(0,0,0,0.3)'
+          backgroundColor: 'rgba(0,0,0,0.4)'
         }}
       >
         <div className="flex items-center gap-2">
-          {/* Window Buttons */}
-          <div className="flex gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500 cursor-pointer hover:bg-red-400" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500 cursor-pointer hover:bg-yellow-400" />
-            <div className="w-3 h-3 rounded-full bg-green-500 cursor-pointer hover:bg-green-400" />
-          </div>
-          <span className="text-sm ml-4" style={{ color: 'var(--text-secondary)' }}>
-            visitor@portfolio: {currentDir}
-          </span>
+          
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-xs md:text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <div className="text-xs md:text-sm font-mono" style={{ color: 'var(--text-secondary)' }}>
             {mounted ? currentTime : '—'}
           </div>
         </div>

@@ -56,6 +56,54 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
   }, [value, commandHistory]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    // Ctrl+C — cancel current input (like real terminal)
+    if (e.key === 'c' && e.ctrlKey) {
+      e.preventDefault();
+      if (value) {
+        // Show the cancelled input in history then clear
+        onSubmit(`^C`);
+        onChange('');
+      }
+      return;
+    }
+
+    // Ctrl+L — clear screen
+    if (e.key === 'l' && e.ctrlKey) {
+      e.preventDefault();
+      onSubmit('clear');
+      onChange('');
+      return;
+    }
+
+    // Ctrl+D — exit/end of input
+    if (e.key === 'd' && e.ctrlKey) {
+      e.preventDefault();
+      onSubmit('exit');
+      return;
+    }
+
+    // Ctrl+U — clear line
+    if (e.key === 'u' && e.ctrlKey) {
+      e.preventDefault();
+      onChange('');
+      return;
+    }
+
+    // Ctrl+A — move to beginning (Home)
+    if (e.key === 'a' && e.ctrlKey) {
+      e.preventDefault();
+      inputRef.current?.setSelectionRange(0, 0);
+      return;
+    }
+
+    // Ctrl+E — move to end (End)
+    if (e.key === 'e' && e.ctrlKey) {
+      e.preventDefault();
+      const len = inputRef.current?.value.length || 0;
+      inputRef.current?.setSelectionRange(len, len);
+      return;
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault();
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
@@ -125,12 +173,15 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
   return (
     <div className="w-full">
       <div className="flex items-center gap-2 py-1">
-        {/* Prompt */}
+        {/* Prompt with colored segments */}
         <span
-          style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', userSelect: 'none' }}
+          style={{ whiteSpace: 'nowrap', userSelect: 'none' }}
           aria-hidden="true"
         >
-          {prompt}
+          <span style={{ color: 'var(--prompt-user)' }}>visitor@portfolio</span>
+          <span style={{ color: 'var(--text-secondary)' }}>:</span>
+          <span style={{ color: 'var(--prompt-path)' }}>{prompt.split(':')[1]?.replace(' $', '') || '~'}</span>
+          <span style={{ color: 'var(--text-secondary)' }}>$ </span>
         </span>
 
         {/* Input */}
