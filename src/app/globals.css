@@ -3,6 +3,7 @@
 /* ─── Terminal theme CSS custom properties ─────────────────────────────────── */
 
 :root {
+  --term-font-size: 14px;
   --bg-terminal: rgba(10, 10, 10, 0.85);
   --text-primary: #00ff9f;
   --text-secondary: #888888;
@@ -126,6 +127,7 @@ body {
   background-color: #0a0a0a;
   color: var(--text-primary);
   font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: var(--term-font-size);
 }
 
 /* Disable right-click context menu globally */
@@ -2649,3 +2651,228 @@ body {
   color: #555;
   font-size: 11px;
 }
+
+/* ─── Minesweeper ────────────────────────────────────────────────────────── */
+.minesweeper-game .minesweeper-board {
+  display: grid;
+  grid-template-columns: repeat(16, 28px);
+  grid-template-rows: repeat(16, 28px);
+  gap: 0;
+  border: 3px solid #555;
+  border-radius: 4px;
+  background: #bdb6b0;
+  padding: 0;
+}
+
+.ms-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.08s;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.ms-hidden {
+  background: linear-gradient(145deg, #d4cfc7, #a8a29e);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.15);
+}
+
+.ms-hidden:hover {
+  background: linear-gradient(145deg, #ddd8d0, #b8b2ae);
+}
+
+.ms-hidden:active {
+  box-shadow: none;
+  background: #b8b2ae;
+}
+
+.ms-revealed {
+  background: #c8c2ba;
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: none;
+}
+
+.ms-mine {
+  background: #e57373 !important;
+}
+
+.ms-flagged {
+  background: linear-gradient(145deg, #d4cfc7, #a8a29e);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.15);
+}
+
+/* ─── Chess ──────────────────────────────────────────────────────────────── */
+.chess-game {
+  overflow: visible !important;
+}
+
+.chess-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px;
+}
+
+.chess-board-wrapper {
+  position: relative;
+}
+
+.chess-board {
+  display: grid;
+  grid-template-columns: repeat(8, 52px);
+  grid-template-rows: repeat(8, 52px);
+  border: 3px solid #555;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.chess-cell {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background 0.1s;
+}
+
+.chess-cell-light {
+  background: #f0d9b5;
+}
+
+.chess-cell-dark {
+  background: #b58863;
+}
+
+.chess-cell-selected {
+  background: #8297d3 !important;
+}
+
+.chess-cell-highlight {
+  background: #6b8e5a !important;
+}
+
+.chess-cell-last-move {
+  background: #cdd16a !important;
+}
+
+.chess-cell-check {
+  background: #e57373 !important;
+}
+
+.chess-move-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.2);
+  position: absolute;
+  pointer-events: none;
+}
+
+.chess-capture-dot {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(0,0,0,0.25);
+  position: absolute;
+  pointer-events: none;
+}
+
+.chess-col-labels {
+  display: grid;
+  grid-template-columns: repeat(8, 52px);
+  text-align: center;
+}
+
+.chess-col-label {
+  font-size: 10px;
+  color: #888;
+  padding: 2px 0;
+}
+
+.chess-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
+  max-width: 180px;
+}
+
+.chess-captured {
+  background: #16213e;
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 40px;
+}
+
+.chess-captured-label {
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.chess-captured-pieces {
+  font-size: 18px;
+  line-height: 24px;
+  word-break: break-all;
+}
+
+.chess-moves-panel {
+  background: #16213e;
+  border-radius: 6px;
+  padding: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.chess-moves-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #00ff9f;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.chess-move-entry {
+  display: flex;
+  gap: 4px;
+  line-height: 1.6;
+}
+
+.chess-move-num {
+  color: #555;
+  min-width: 24px;
+}
+
+.chess-move-white {
+  min-width: 48px;
+}
+
+.chess-move-black {
+  min-width: 48px;
+}
+
+/* ─── Light theme overrides for new games ────────────────────────────────── */
+[data-theme="light"] .ms-cell { border-color: rgba(0,0,0,0.1); }
+[data-theme="light"] .ms-hidden {
+  background: linear-gradient(145deg, #e8e4de, #c8c2bc);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(0,0,0,0.1);
+}
+[data-theme="light"] .ms-revealed { background: #d8d2ca; }
+[data-theme="light"] .ms-mine { background: #ef9a9a !important; }
+[data-theme="light"] .chess-board { border-color: #999; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+[data-theme="light"] .chess-cell-light { background: #f5f0e8; }
+[data-theme="light"] .chess-cell-dark { background: #c8a882; }

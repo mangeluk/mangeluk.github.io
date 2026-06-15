@@ -3,7 +3,7 @@
 // src/components/Desktop/Desktop.tsx
 // Main desktop container with wallpaper, icons, windows, and taskbar.
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import type { Theme, Lang } from '@/types/terminal';
 import { isValidTheme, isValidLang } from '@/lib/theme';
 
@@ -131,9 +131,23 @@ export default function Desktop() {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
+  // Apply saved font size on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('terminal-font-size');
+      const sizes: Record<string, string> = { small: '12px', medium: '14px', large: '16px' };
+      if (saved && sizes[saved]) {
+        document.documentElement.style.setProperty('--term-font-size', sizes[saved]);
+      }
+    } catch {}
+  }, []);
+
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
-    try { localStorage.setItem('terminal-theme', t); } catch {}
+    try {
+      localStorage.setItem('terminal-theme', t);
+      document.documentElement.setAttribute('data-theme', t);
+    } catch {}
   }, []);
 
   const setLang = useCallback((l: Lang) => {
@@ -241,7 +255,7 @@ export default function Desktop() {
   }, [openWindow]);
 
   const handleContextChangeWallpaper = useCallback(() => {
-    openWindow('settings-wallpaper', 'about');
+    openWindow('settings', undefined, undefined, 'settings');
   }, [openWindow]);
 
   const handleContextAbout = useCallback(() => {

@@ -143,6 +143,17 @@ function resetState(): GameSnapshot {
   };
 }
 
+const NUMBER_COLORS: Record<number, string> = {
+  1: '#1976D2',
+  2: '#388E3C',
+  3: '#D32F2F',
+  4: '#7B1FA2',
+  5: '#FF8F00',
+  6: '#00838F',
+  7: '#424242',
+  8: '#78909C',
+};
+
 export default function Minesweeper() {
   const [gs, setGs] = useState<GameSnapshot>(resetState);
   const [timer, setTimer] = useState(0);
@@ -217,48 +228,35 @@ export default function Minesweeper() {
   };
 
   return (
-    <div className="game-container" onContextMenu={handleContextMenu}>
+    <div className="game-container minesweeper-game" onContextMenu={handleContextMenu}>
       <div className="game-header">
-        <span className="game-score">Mines: {MINES - gs.flagCount}</span>
+        <span className="game-score">{'\u{1F4A3}'} {MINES - gs.flagCount}</span>
         <span className="game-controls">{formatTime(timer)}</span>
         <button className="game-btn" onClick={resetGame}>New Game</button>
       </div>
 
-      <div
-        className="minesweeper-board"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${COLS}, ${CELL_SIZE}px)`,
-          gridTemplateRows: `repeat(${ROWS}, ${CELL_SIZE}px)`,
-          gap: 1,
-        }}
-      >
+      <div className="minesweeper-board">
         {gs.board.map((row, r) =>
-          row.map((cell, c) => (
-            <div
-              key={`${r}-${c}`}
-              className={`minesweeper-cell ${cell.isRevealed ? 'revealed' : ''} ${cell.isFlagged ? 'flagged' : ''}`}
-              style={{
-                width: CELL_SIZE,
-                height: CELL_SIZE,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 14,
-                fontWeight: 'bold',
-                cursor: cell.isRevealed ? 'default' : 'pointer',
-                userSelect: 'none',
-              }}
-              onClick={() => handleCellClick(r, c)}
-              onContextMenu={(e) => { e.preventDefault(); handleCellRightClick(r, c); }}
-              onTouchStart={() => handleTouchStartCell(r, c)}
-              onTouchEnd={() => handleTouchEndCell(r, c)}
-            >
-              {cell.isFlagged && !cell.isRevealed && '🚩'}
-              {cell.isRevealed && cell.isMine && '💣'}
-              {cell.isRevealed && !cell.isMine && cell.adjacentMines > 0 && cell.adjacentMines}
-            </div>
-          ))
+          row.map((cell, c) => {
+            const numColor = cell.adjacentMines > 0 ? NUMBER_COLORS[cell.adjacentMines] : undefined;
+            return (
+              <div
+                key={`${r}-${c}`}
+                className={`ms-cell ${cell.isRevealed ? 'ms-revealed' : 'ms-hidden'} ${cell.isFlagged ? 'ms-flagged' : ''} ${cell.isRevealed && cell.isMine ? 'ms-mine' : ''}`}
+                style={{ width: CELL_SIZE, height: CELL_SIZE }}
+                onClick={() => handleCellClick(r, c)}
+                onContextMenu={(e) => { e.preventDefault(); handleCellRightClick(r, c); }}
+                onTouchStart={() => handleTouchStartCell(r, c)}
+                onTouchEnd={() => handleTouchEndCell(r, c)}
+              >
+                {cell.isFlagged && !cell.isRevealed && '\u{1F6A9}'}
+                {cell.isRevealed && cell.isMine && '\u{1F4A3}'}
+                {cell.isRevealed && !cell.isMine && cell.adjacentMines > 0 && (
+                  <span style={{ color: numColor, fontWeight: 800 }}>{cell.adjacentMines}</span>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 

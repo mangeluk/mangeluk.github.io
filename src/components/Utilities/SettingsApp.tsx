@@ -44,7 +44,7 @@ export default function SettingsApp({ theme, lang, setTheme, setLang }: Settings
     setFontSize(size);
     localStorage.setItem('terminal-font-size', size);
     const px = FONT_SIZES.find((f) => f.id === size)?.value || '14px';
-    document.documentElement.style.fontSize = px;
+    document.documentElement.style.setProperty('--term-font-size', px);
   }, []);
 
   return (

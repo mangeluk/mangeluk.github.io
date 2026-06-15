@@ -4,13 +4,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const CANVAS_WIDTH = 320;
 const CANVAS_HEIGHT = 480;
-const GRAVITY = 0.4;
-const FLAP_STRENGTH = -6.5;
+const GRAVITY = 0.25;
+const FLAP_STRENGTH = -4.5;
 const PIPE_WIDTH = 52;
-const PIPE_GAP = 130;
-const PIPE_SPEED = 2.5;
-const PIPE_INTERVAL = 1600;
-const BIRD_SIZE = 20;
+const PIPE_GAP = 150;
+const PIPE_SPEED = 1.5;
+const PIPE_INTERVAL = 2000;
+const BIRD_SIZE = 24;
 const GROUND_HEIGHT = 40;
 
 interface Bird {
@@ -45,26 +45,21 @@ function initGameState(): GameState {
 function tick(state: GameState): GameState {
   if (state.gameOver || !state.started) return state;
 
-  // Bird physics
   let velocity = state.bird.velocity + GRAVITY;
   let y = state.bird.y + velocity;
 
-  // Ceiling
   if (y < BIRD_SIZE / 2) {
     y = BIRD_SIZE / 2;
     velocity = 0;
   }
 
-  // Ground
   if (y + BIRD_SIZE / 2 >= CANVAS_HEIGHT - GROUND_HEIGHT) {
     return { ...state, bird: { y: CANVAS_HEIGHT - GROUND_HEIGHT - BIRD_SIZE / 2, velocity: 0 }, gameOver: true };
   }
 
-  // Move pipes
   let pipes = state.pipes.map((p) => ({ ...p, x: p.x - PIPE_SPEED }));
   pipes = pipes.filter((p) => p.x + PIPE_WIDTH > -10);
 
-  // Score
   let score = state.score;
   pipes = pipes.map((p) => {
     if (!p.passed && p.x + PIPE_WIDTH < CANVAS_WIDTH / 3) {
@@ -74,7 +69,6 @@ function tick(state: GameState): GameState {
     return p;
   });
 
-  // Collision with pipes
   const birdLeft = CANVAS_WIDTH / 3 - BIRD_SIZE / 2;
   const birdRight = CANVAS_WIDTH / 3 + BIRD_SIZE / 2;
   const birdTop = y - BIRD_SIZE / 2;
@@ -121,7 +115,6 @@ export default function FlappyBird() {
     }));
   }, [resetGame]);
 
-  // Game loop
   useEffect(() => {
     const loop = () => {
       setGs((prev) => tick(prev));
@@ -133,7 +126,6 @@ export default function FlappyBird() {
     };
   }, []);
 
-  // Pipe spawner
   useEffect(() => {
     if (!gs.started || gs.gameOver) {
       if (pipeTimerRef.current) clearInterval(pipeTimerRef.current);
@@ -154,7 +146,6 @@ export default function FlappyBird() {
     };
   }, [gs.started, gs.gameOver]);
 
-  // Keyboard
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === ' ' || e.key === 'ArrowUp') {
       e.preventDefault();
@@ -167,7 +158,6 @@ export default function FlappyBird() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Draw
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -176,39 +166,87 @@ export default function FlappyBird() {
 
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Sky
-    ctx.fillStyle = '#4dc9f6';
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT - GROUND_HEIGHT);
+    skyGrad.addColorStop(0, '#70c5ce');
+    skyGrad.addColorStop(1, '#87ceeb');
+    ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_HEIGHT);
 
-    // Pipes
-    for (const pipe of gs.pipes) {
-      // Top pipe
-      ctx.fillStyle = '#2d8b2d';
-      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapY);
-      ctx.fillStyle = '#1a5c1a';
-      ctx.fillRect(pipe.x - 4, pipe.gapY - 20, PIPE_WIDTH + 8, 20);
-
-      // Bottom pipe
-      ctx.fillStyle = '#2d8b2d';
-      ctx.fillRect(pipe.x, pipe.gapY + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - GROUND_HEIGHT - pipe.gapY - PIPE_GAP);
-      ctx.fillStyle = '#1a5c1a';
-      ctx.fillRect(pipe.x - 4, pipe.gapY + PIPE_GAP, PIPE_WIDTH + 8, 20);
+    // Clouds
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    const cloudY = [60, 120, 200];
+    for (let i = 0; i < 3; i++) {
+      const cx = ((Date.now() / 40 + i * 130) % (CANVAS_WIDTH + 80)) - 40;
+      ctx.beginPath();
+      ctx.arc(cx, cloudY[i], 20, 0, Math.PI * 2);
+      ctx.arc(cx + 15, cloudY[i] - 8, 16, 0, Math.PI * 2);
+      ctx.arc(cx + 30, cloudY[i], 18, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    // Ground
-    ctx.fillStyle = '#ded895';
+    // Pipes with gradient and caps
+    for (const pipe of gs.pipes) {
+      const topH = pipe.gapY;
+      const botY = pipe.gapY + PIPE_GAP;
+      const botH = CANVAS_HEIGHT - GROUND_HEIGHT - botY;
+
+      // Top pipe body
+      const topGrad = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
+      topGrad.addColorStop(0, '#5cb85c');
+      topGrad.addColorStop(0.3, '#73d873');
+      topGrad.addColorStop(0.7, '#5cb85c');
+      topGrad.addColorStop(1, '#4a9a4a');
+      ctx.fillStyle = topGrad;
+      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, topH);
+
+      // Top pipe cap
+      ctx.fillStyle = '#4a9a4a';
+      ctx.fillRect(pipe.x - 4, topH - 24, PIPE_WIDTH + 8, 24);
+      ctx.fillStyle = '#5cb85c';
+      ctx.fillRect(pipe.x - 2, topH - 22, PIPE_WIDTH + 4, 20);
+
+      // Bottom pipe body
+      const botGrad = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
+      botGrad.addColorStop(0, '#5cb85c');
+      botGrad.addColorStop(0.3, '#73d873');
+      botGrad.addColorStop(0.7, '#5cb85c');
+      botGrad.addColorStop(1, '#4a9a4a');
+      ctx.fillStyle = botGrad;
+      ctx.fillRect(pipe.x, botY, PIPE_WIDTH, botH);
+
+      // Bottom pipe cap
+      ctx.fillStyle = '#4a9a4a';
+      ctx.fillRect(pipe.x - 4, botY, PIPE_WIDTH + 8, 24);
+      ctx.fillStyle = '#5cb85c';
+      ctx.fillRect(pipe.x - 2, botY + 2, PIPE_WIDTH + 4, 20);
+    }
+
+    // Ground with grass
+    const groundGrad = ctx.createLinearGradient(0, CANVAS_HEIGHT - GROUND_HEIGHT, 0, CANVAS_HEIGHT);
+    groundGrad.addColorStop(0, '#8B4513');
+    groundGrad.addColorStop(0.15, '#8B4513');
+    groundGrad.addColorStop(0.15, '#228B22');
+    groundGrad.addColorStop(0.3, '#228B22');
+    groundGrad.addColorStop(0.3, '#8B4513');
+    groundGrad.addColorStop(1, '#654321');
+    ctx.fillStyle = groundGrad;
     ctx.fillRect(0, CANVAS_HEIGHT - GROUND_HEIGHT, CANVAS_WIDTH, GROUND_HEIGHT);
-    ctx.fillStyle = '#c4a642';
-    ctx.fillRect(0, CANVAS_HEIGHT - GROUND_HEIGHT, CANVAS_WIDTH, 3);
 
     // Bird
     const birdX = CANVAS_WIDTH / 3;
     const birdY = gs.bird.y;
-    const angle = Math.min(Math.max(gs.bird.velocity * 3, -30), 90) * (Math.PI / 180);
+    const angle = Math.min(Math.max(gs.bird.velocity * 4, -30), 90) * (Math.PI / 180);
 
     ctx.save();
     ctx.translate(birdX, birdY);
     ctx.rotate(angle);
+
+    // Body shadow
+    ctx.fillStyle = '#d4a017';
+    ctx.beginPath();
+    ctx.ellipse(1, 2, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     // Body
     ctx.fillStyle = '#f7dc6f';
@@ -216,40 +254,68 @@ export default function FlappyBird() {
     ctx.ellipse(0, 0, BIRD_SIZE / 2, BIRD_SIZE / 2.5, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Eye
+    // Belly
+    ctx.fillStyle = '#fdebd0';
+    ctx.beginPath();
+    ctx.ellipse(-2, 3, BIRD_SIZE / 3.5, BIRD_SIZE / 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wing
+    ctx.fillStyle = '#e6b800';
+    ctx.beginPath();
+    ctx.ellipse(-4, -2, 8, 5, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye white
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(6, -4, 5, 0, Math.PI * 2);
+    ctx.arc(7, -4, 6, 0, Math.PI * 2);
     ctx.fill();
+
+    // Eye pupil
     ctx.fillStyle = '#000000';
     ctx.beginPath();
-    ctx.arc(7, -4, 2.5, 0, Math.PI * 2);
+    ctx.arc(8, -4, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eye highlight
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(9, -5, 1.2, 0, Math.PI * 2);
     ctx.fill();
 
     // Beak
     ctx.fillStyle = '#e67e22';
     ctx.beginPath();
-    ctx.moveTo(BIRD_SIZE / 2, -2);
-    ctx.lineTo(BIRD_SIZE / 2 + 8, 0);
-    ctx.lineTo(BIRD_SIZE / 2, 4);
+    ctx.moveTo(BIRD_SIZE / 2 - 2, -2);
+    ctx.lineTo(BIRD_SIZE / 2 + 10, 0);
+    ctx.lineTo(BIRD_SIZE / 2 - 2, 4);
     ctx.closePath();
     ctx.fill();
 
     ctx.restore();
 
-    // Score
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 32px monospace';
+    // Score with outline
     ctx.textAlign = 'center';
-    ctx.fillText(String(gs.score), CANVAS_WIDTH / 2, 50);
+    ctx.font = 'bold 36px monospace';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 4;
+    ctx.strokeText(String(gs.score), CANVAS_WIDTH / 2, 55);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(String(gs.score), CANVAS_WIDTH / 2, 55);
 
     if (!gs.started) {
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
       ctx.fillStyle = '#ffffff';
-      ctx.font = '20px monospace';
-      ctx.fillText('Click or Press SPACE', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 20);
-      ctx.fillText('to Flap', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 10);
+      ctx.font = 'bold 22px monospace';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.strokeText('TAP or SPACE', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 15);
+      ctx.fillText('TAP or SPACE', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 15);
+      ctx.font = '16px monospace';
+      ctx.strokeText('to start', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 15);
+      ctx.fillText('to start', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 15);
     }
   }, [gs]);
 
@@ -268,7 +334,7 @@ export default function FlappyBird() {
         ref={canvasRef}
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
-        style={{ maxWidth: '100%', cursor: 'pointer' }}
+        style={{ maxWidth: '100%', cursor: 'pointer', borderRadius: 8 }}
         onClick={handleCanvasClick}
       />
 
