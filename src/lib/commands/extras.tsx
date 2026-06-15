@@ -42,11 +42,11 @@ registerCommand({
   description: 'Abre el perfil de GitHub',
   execute() {
     if (typeof window !== 'undefined') {
-      window.open('https://github.com/mangeluk', '_blank');
+      window.open('https://github.com/Magamex', '_blank');
     }
     return {
       type: 'text',
-      content: 'Abriendo https://github.com/mangeluk...'
+      content: 'Abriendo https://github.com/Magamex...'
     };
   },
 });
@@ -56,7 +56,7 @@ registerCommand({
   description: 'Abre el perfil de LinkedIn',
   execute() {
     if (typeof window !== 'undefined') {
-      window.open('https://linkedin.com/in/mangeluk', '_blank');
+      window.open('https://linkedin.com/in/matiasangeluk', '_blank');
     }
     return {
       type: 'text',
@@ -70,7 +70,7 @@ registerCommand({
   description: 'Abre el cliente de correo',
   execute() {
     if (typeof window !== 'undefined') {
-      window.location.href = 'mailto:contact@mangeluk.dev';
+      window.location.href = 'mailto:matias.angeluk@gmail.com';
     }
     return {
       type: 'text',

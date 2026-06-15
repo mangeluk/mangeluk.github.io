@@ -182,19 +182,19 @@ nothing to commit, working tree clean`
       return {
         type: 'text',
         content: `commit a1b2c3d (HEAD -> main, origin/main)
-Author: Matias Angeluk <contact@mangeluk.dev>
+Author: Matias Angeluk <matias.angeluk@gmail.com>
 Date:   ${new Date().toLocaleDateString()}
 
     feat: add Linux OS simulation commands
 
 commit e4f5g6h
-Author: Matias Angeluk <contact@mangeluk.dev>
+Author: Matias Angeluk <matias.angeluk@gmail.com>
 Date:   ${new Date(Date.now() - 86400000).toLocaleDateString()}
 
     feat: add terminal portfolio with AI integration
 
 commit i7j8k9l
-Author: Matias Angeluk <contact@mangeluk.dev>
+Author: Matias Angeluk <matias.angeluk@gmail.com>
 Date:   ${new Date(Date.now() - 172800000).toLocaleDateString()}
 
     init: project setup with Next.js and Tailwind`
@@ -204,7 +204,7 @@ Date:   ${new Date(Date.now() - 172800000).toLocaleDateString()}
       return { type: 'text', content: '* main\n  develop\n  feature/linux-commands' };
     }
     if (sub === 'remote') {
-      return { type: 'text', content: 'origin\thttps://github.com/mangeluk/mangeluk.github.io.git (fetch)\norigin\thttps://github.com/mangeluk/mangeluk.github.io.git (push)' };
+      return { type: 'text', content: 'origin\thttps://github.com/Magamex/mangeluk.github.io.git (fetch)\norigin\thttps://github.com/Magamex/mangeluk.github.io.git (push)' };
     }
     if (sub === 'diff') {
       return { type: 'text', content: '' };

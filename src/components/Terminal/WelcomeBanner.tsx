@@ -8,14 +8,6 @@ interface WelcomeBannerProps {
   onComplete?: () => void;
 }
 
-const ASCII_LOGO = `
- ███╗   ███╗██╗███████╗███████╗ ██████╗
- ████╗ ████║██║██╔════╝██╔════╝██╔════╝
- ██╔████╔██║██║███████╗█████╗  ██║
- ██║╚██╔╝██║██║╚════██║██╔══╝  ██║
- ██║ ╚═╝ ██║██║███████║███████╗╚██████╗
- ╚═╝     ╚═╝╚═╝╚══════╝╚══════╝ ╚═════╝`.trimStart();
-
 const BOOT_MESSAGES_ES = [
   { ts: 0, text: '[    0.000000] Linux 6.8.0-mangeluk x86_64 — 16GB RAM, Intel i7-12700K', type: 'kernel' as const },
   { ts: 100, text: '[    0.082341] EXT4-fs (sda1): mounted — ordered data mode', type: 'kernel' as const },
@@ -69,14 +61,6 @@ export default function WelcomeBanner({ lang, onComplete }: WelcomeBannerProps) 
 
   return (
     <div className="mb-2">
-      {/* ASCII Logo */}
-      <pre
-        className="text-[10px] md:text-xs leading-none mb-2"
-        style={{ color: 'var(--text-success)', fontFamily: 'inherit', margin: 0 }}
-      >
-        {ASCII_LOGO}
-      </pre>
-
       {/* Boot messages */}
       <div className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
         {messages.slice(0, visibleLines).map((msg, i) => {

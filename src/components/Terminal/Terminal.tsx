@@ -393,10 +393,10 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
                 Matías Angeluk
               </h1>
               <div className="text-xs md:text-sm flex flex-wrap justify-center md:justify-start gap-2 md:gap-4 mt-1" style={{ color: 'var(--text-secondary)' }}>
-                <a href="https://github.com/mangeluk" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                <a href="https://github.com/Magamex" target="_blank" rel="noopener noreferrer" className="hover:underline">
                   GitHub
                 </a>
-                <a href="https://linkedin.com/in/mangeluk" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                <a href="https://linkedin.com/in/matiasangeluk" target="_blank" rel="noopener noreferrer" className="hover:underline">
                   LinkedIn
                 </a>
                 <a href="mailto:matiasangeluk@gmail.com" className="hover:underline">

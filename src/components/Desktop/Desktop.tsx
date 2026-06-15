@@ -26,6 +26,13 @@ import Window from './Window';
 import DesktopIcon from './DesktopIcon';
 import Taskbar from './Taskbar';
 import ContentWindow from './ContentWindow';
+import StartMenu from './StartMenu';
+import { SnakeGame } from '../Games';
+import { TetrisGame } from '../Games';
+import { Game2048 } from '../Games';
+import { PongGame } from '../Games';
+import { QuizGame } from '../Games';
+import { DoomGame } from '../Games';
 
 interface DesktopWindow {
   id: string;
@@ -38,6 +45,8 @@ interface DesktopWindow {
   contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact';
   /** Command to auto-submit when terminal opens */
   initialCommand?: string;
+  /** If set, window renders a game */
+  gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom';
 }
 
 const DESKTOP_ICONS = [
@@ -48,6 +57,15 @@ const DESKTOP_ICONS = [
   { id: 'experience', icon: '💼', label: 'Experience', contentType: 'experience' as const },
   { id: 'contact', icon: '📧', label: 'Contact', contentType: 'contact' as const },
 ];
+
+const GAME_ICONS: Record<string, { icon: string; label: string }> = {
+  snake: { icon: '🐍', label: 'Snake' },
+  tetris: { icon: '🧱', label: 'Tetris' },
+  '2048': { icon: '🔢', label: '2048' },
+  pong: { icon: '🏓', label: 'Pong' },
+  quiz: { icon: '❓', label: 'Quiz' },
+  doom: { icon: '👹', label: 'Doom' },
+};
 
 export default function Desktop() {
   function getInitialTheme(): Theme {
@@ -80,6 +98,7 @@ export default function Desktop() {
   ]);
   const [activeWindowId, setActiveWindowId] = useState<string>('terminal');
   const [zCounter, setZCounter] = useState(100);
+  const [startMenuOpen, setStartMenuOpen] = useState(false);
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
@@ -96,7 +115,11 @@ export default function Desktop() {
     setZCounter((z) => z + 1);
   }, []);
 
-  const openWindow = useCallback((id: string, contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact') => {
+  const openWindow = useCallback((
+    id: string,
+    contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact',
+    gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom',
+  ) => {
     setWindows((prev) => {
       const existing = prev.find((w) => w.id === id);
       if (existing) {
@@ -104,17 +127,32 @@ export default function Desktop() {
           w.id === id ? { ...w, isOpen: true, isMinimized: false } : w
         );
       }
-      const icon = DESKTOP_ICONS.find((d) => d.id === id);
+
+      let icon = '📄';
+      let title = id;
+
+      if (gameType && GAME_ICONS[gameType]) {
+        icon = GAME_ICONS[gameType].icon;
+        title = GAME_ICONS[gameType].label;
+      } else {
+        const iconDef = DESKTOP_ICONS.find((d) => d.id === id);
+        if (iconDef) {
+          icon = iconDef.icon;
+          title = iconDef.label;
+        }
+      }
+
       return [
         ...prev,
         {
           id,
-          title: icon?.label || id,
-          icon: icon?.icon || '📄',
+          title,
+          icon,
           isOpen: true,
           isMinimized: false,
           isMaximized: false,
           contentType,
+          gameType,
         },
       ];
     });
@@ -124,7 +162,6 @@ export default function Desktop() {
   const closeWindow = useCallback((id: string) => {
     setWindows((prev) => prev.filter((w) => w.id !== id));
     if (activeWindowId === id) {
-      // Focus the most recently focused remaining window
       setActiveWindowId('');
     }
   }, [activeWindowId]);
@@ -144,8 +181,14 @@ export default function Desktop() {
     );
   }, []);
 
-  const handleDesktopClick = useCallback(() => {
+  const handleDesktopClick = useCallback((e: React.MouseEvent) => {
+    // Don't close start menu if clicking on taskbar or start menu itself
+    const target = e.target as HTMLElement;
+    if (target.closest('.os-taskbar') || target.closest('.start-menu') || target.closest('.start-menu-backdrop')) {
+      return;
+    }
     setActiveWindowId('');
+    setStartMenuOpen(false);
   }, []);
 
   const handleIconDoubleClick = useCallback((iconId: string, contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact') => {
@@ -176,6 +219,31 @@ export default function Desktop() {
     setLang(lang === 'es' ? 'en' : 'es');
   }, [lang, setLang]);
 
+  const handleStartMenuOpen = useCallback((id: string, type: 'terminal' | 'game' | 'content' | 'utility', contentType?: string) => {
+    if (type === 'terminal') {
+      openWindow('terminal');
+    } else if (type === 'game') {
+      openWindow(id, undefined, id as 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom');
+    } else if (type === 'content' && contentType) {
+      openWindow(id, contentType as 'about' | 'projects' | 'skills' | 'experience' | 'contact');
+    } else {
+      // For utilities, open a terminal with the command
+      openWindow('terminal');
+    }
+  }, [openWindow]);
+
+  const renderGameContent = useCallback((gameType: string) => {
+    switch (gameType) {
+      case 'snake': return <SnakeGame />;
+      case 'tetris': return <TetrisGame />;
+      case '2048': return <Game2048 />;
+      case 'pong': return <PongGame />;
+      case 'quiz': return <QuizGame lang={lang} />;
+      case 'doom': return <DoomGame />;
+      default: return <div>Game not found</div>;
+    }
+  }, [lang]);
+
   return (
     <div className="os-desktop" onClick={handleDesktopClick}>
       {/* Desktop icons */}
@@ -192,7 +260,6 @@ export default function Desktop() {
 
       {/* Windows */}
       {windows.map((win, index) => {
-        // Determine z-index: active window on top, others in insertion order
         const isActive = activeWindowId === win.id;
         const winZ = isActive ? zCounter + 1 : 100 + index;
 
@@ -213,7 +280,9 @@ export default function Desktop() {
             initialX={win.id === 'terminal' ? 100 : 160 + index * 30}
             initialY={win.id === 'terminal' ? 30 : 50 + index * 30}
           >
-            {win.contentType ? (
+            {win.gameType ? (
+              renderGameContent(win.gameType)
+            ) : win.contentType ? (
               <ContentWindow contentType={win.contentType} lang={lang} />
             ) : (
               <Terminal
@@ -228,6 +297,13 @@ export default function Desktop() {
         );
       })}
 
+      {/* Start Menu */}
+      <StartMenu
+        isOpen={startMenuOpen}
+        onClose={() => setStartMenuOpen(false)}
+        onOpenApp={handleStartMenuOpen}
+      />
+
       {/* Taskbar */}
       <Taskbar
         apps={windows.map((w) => ({
@@ -240,6 +316,8 @@ export default function Desktop() {
         }))}
         lang={lang}
         onToggleLang={handleToggleLang}
+        onStartClick={() => setStartMenuOpen((o) => !o)}
+        isStartMenuOpen={startMenuOpen}
       />
     </div>
   );

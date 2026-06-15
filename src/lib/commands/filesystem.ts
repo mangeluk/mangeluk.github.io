@@ -194,7 +194,7 @@ fi`
                 type: 'file',
                 content: `[user]
     name = Matias Angeluk
-    email = contact@mangeluk.dev
+    email = matias.angeluk@gmail.com
 [core]
     editor = nano
 [init]

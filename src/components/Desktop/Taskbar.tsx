@@ -19,11 +19,12 @@ interface TaskbarProps {
   apps: TaskbarApp[];
   lang: Lang;
   onToggleLang: () => void;
+  onStartClick: () => void;
+  isStartMenuOpen: boolean;
 }
 
-export default function Taskbar({ apps, lang, onToggleLang }: TaskbarProps) {
+export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStartMenuOpen }: TaskbarProps) {
   const [currentTime, setCurrentTime] = useState('');
-  const [showStartMenu, setShowStartMenu] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -44,8 +45,11 @@ export default function Taskbar({ apps, lang, onToggleLang }: TaskbarProps) {
     <div className="os-taskbar">
       {/* Start button */}
       <button
-        className="os-taskbar__start"
-        onClick={() => setShowStartMenu(!showStartMenu)}
+        className={`os-taskbar__start ${isStartMenuOpen ? 'os-taskbar__start--active' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onStartClick();
+        }}
         aria-label="Start menu"
       >
         <span className="os-taskbar__start-icon">⬛</span>

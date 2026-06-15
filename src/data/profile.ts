@@ -180,17 +180,17 @@ Actualmente lidero equipos técnicos, diseño arquitecturas de sistemas e implem
     contact: [
       {
         label: 'Email',
-        value: 'mailto:contact@mangeluk.dev',
+        value: 'mailto:matias.angeluk@gmail.com',
         isUrl: true,
       },
       {
         label: 'LinkedIn',
-        value: 'https://linkedin.com/in/mangeluk',
+        value: 'https://linkedin.com/in/matiasangeluk',
         isUrl: true,
       },
       {
         label: 'GitHub',
-        value: 'https://github.com/mangeluk',
+        value: 'https://github.com/Magamex',
         isUrl: true,
       },
     ],
@@ -199,12 +199,12 @@ Actualmente lidero equipos técnicos, diseño arquitecturas de sistemas e implem
       {
         name: 'GitHub',
         icon: '[gh]',
-        url: 'https://github.com/mangeluk',
+        url: 'https://github.com/Magamex',
       },
       {
         name: 'LinkedIn',
         icon: '[in]',
-        url: 'https://linkedin.com/in/mangeluk',
+        url: 'https://linkedin.com/in/matiasangeluk',
       },
     ],
 
@@ -341,17 +341,17 @@ I currently lead technical teams, design system architectures and implement AI s
     contact: [
       {
         label: 'Email',
-        value: 'mailto:contact@mangeluk.dev',
+        value: 'mailto:matias.angeluk@gmail.com',
         isUrl: true,
       },
       {
         label: 'LinkedIn',
-        value: 'https://linkedin.com/in/mangeluk',
+        value: 'https://linkedin.com/in/matiasangeluk',
         isUrl: true,
       },
       {
         label: 'GitHub',
-        value: 'https://github.com/mangeluk',
+        value: 'https://github.com/Magamex',
         isUrl: true,
       },
     ],
@@ -360,12 +360,12 @@ I currently lead technical teams, design system architectures and implement AI s
       {
         name: 'GitHub',
         icon: '[gh]',
-        url: 'https://github.com/mangeluk',
+        url: 'https://github.com/Magamex',
       },
       {
         name: 'LinkedIn',
         icon: '[in]',
-        url: 'https://linkedin.com/in/mangeluk',
+        url: 'https://linkedin.com/in/matiasangeluk',
       },
     ],
 
