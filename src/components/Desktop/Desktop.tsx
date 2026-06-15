@@ -33,6 +33,9 @@ import { Game2048 } from '../Games';
 import { PongGame } from '../Games';
 import { QuizGame } from '../Games';
 import { DoomGame } from '../Games';
+import { CalculatorApp } from '../Utilities';
+import { NotepadApp } from '../Utilities';
+import { WeatherApp } from '../Utilities';
 
 interface DesktopWindow {
   id: string;
@@ -47,6 +50,8 @@ interface DesktopWindow {
   initialCommand?: string;
   /** If set, window renders a game */
   gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom';
+  /** If set, window renders a utility app */
+  utilityType?: 'calculator' | 'notepad' | 'weather';
 }
 
 const DESKTOP_ICONS = [
@@ -65,6 +70,12 @@ const GAME_ICONS: Record<string, { icon: string; label: string }> = {
   pong: { icon: '🏓', label: 'Pong' },
   quiz: { icon: '❓', label: 'Quiz' },
   doom: { icon: '👹', label: 'Doom' },
+};
+
+const UTILITY_ICONS: Record<string, { icon: string; label: string }> = {
+  calculator: { icon: '🧮', label: 'Calculator' },
+  notepad: { icon: '📝', label: 'Notepad' },
+  weather: { icon: '🌤️', label: 'Weather' },
 };
 
 export default function Desktop() {
@@ -119,6 +130,7 @@ export default function Desktop() {
     id: string,
     contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact',
     gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom',
+    utilityType?: 'calculator' | 'notepad' | 'weather',
   ) => {
     setWindows((prev) => {
       const existing = prev.find((w) => w.id === id);
@@ -131,7 +143,10 @@ export default function Desktop() {
       let icon = '📄';
       let title = id;
 
-      if (gameType && GAME_ICONS[gameType]) {
+      if (utilityType && UTILITY_ICONS[utilityType]) {
+        icon = UTILITY_ICONS[utilityType].icon;
+        title = UTILITY_ICONS[utilityType].label;
+      } else if (gameType && GAME_ICONS[gameType]) {
         icon = GAME_ICONS[gameType].icon;
         title = GAME_ICONS[gameType].label;
       } else {
@@ -153,6 +168,7 @@ export default function Desktop() {
           isMaximized: false,
           contentType,
           gameType,
+          utilityType,
         },
       ];
     });
@@ -226,9 +242,8 @@ export default function Desktop() {
       openWindow(id, undefined, id as 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom');
     } else if (type === 'content' && contentType) {
       openWindow(id, contentType as 'about' | 'projects' | 'skills' | 'experience' | 'contact');
-    } else {
-      // For utilities, open a terminal with the command
-      openWindow('terminal');
+    } else if (type === 'utility') {
+      openWindow(id, undefined, undefined, id as 'calculator' | 'notepad' | 'weather');
     }
   }, [openWindow]);
 
@@ -243,6 +258,15 @@ export default function Desktop() {
       default: return <div>Game not found</div>;
     }
   }, [lang]);
+
+  const renderUtilityContent = useCallback((utilityType: string) => {
+    switch (utilityType) {
+      case 'calculator': return <CalculatorApp />;
+      case 'notepad': return <NotepadApp />;
+      case 'weather': return <WeatherApp />;
+      default: return <div>App not found</div>;
+    }
+  }, []);
 
   return (
     <div className="os-desktop" onClick={handleDesktopClick}>
@@ -282,6 +306,8 @@ export default function Desktop() {
           >
             {win.gameType ? (
               renderGameContent(win.gameType)
+            ) : win.utilityType ? (
+              renderUtilityContent(win.utilityType)
             ) : win.contentType ? (
               <ContentWindow contentType={win.contentType} lang={lang} />
             ) : (

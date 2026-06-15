@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: 'Terminal Portfolio — Mangeluk',
   description:
     'Portfolio profesional interactivo con interfaz de terminal de comandos. Desarrollador Fullstack: React, Next.js, TypeScript, Node.js.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
