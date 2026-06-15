@@ -8,14 +8,17 @@ import React from 'react';
 interface DesktopIconProps {
   icon: string;
   label: string;
-  onClick: () => void;
+  onDoubleClick: () => void;
 }
 
-export default function DesktopIcon({ icon, label, onClick }: DesktopIconProps) {
+export default function DesktopIcon({ icon, label, onDoubleClick }: DesktopIconProps) {
   return (
     <button
       className="desktop-icon"
-      onClick={onClick}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick();
+      }}
       aria-label={`Open ${label}`}
     >
       <div className="desktop-icon__image">

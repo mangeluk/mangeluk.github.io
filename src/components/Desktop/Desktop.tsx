@@ -3,11 +3,9 @@
 // src/components/Desktop/Desktop.tsx
 // Main desktop container with wallpaper, icons, windows, and taskbar.
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { Theme, Lang } from '@/types/terminal';
 import { isValidTheme, isValidLang } from '@/lib/theme';
-import { resolveCommand } from '@/lib/commands/index';
-import { resetConversationHistory } from '@/lib/commands/ai';
 
 // Import all command modules
 import '@/lib/commands/help';
@@ -27,6 +25,7 @@ import Terminal from '../Terminal/Terminal';
 import Window from './Window';
 import DesktopIcon from './DesktopIcon';
 import Taskbar from './Taskbar';
+import ContentWindow from './ContentWindow';
 
 interface DesktopWindow {
   id: string;
@@ -35,16 +34,19 @@ interface DesktopWindow {
   isOpen: boolean;
   isMinimized: boolean;
   isMaximized: boolean;
+  /** If set, window renders a content viewer instead of terminal */
+  contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact';
+  /** Command to auto-submit when terminal opens */
   initialCommand?: string;
 }
 
 const DESKTOP_ICONS = [
   { id: 'terminal', icon: '⬛', label: 'Terminal', command: '' },
-  { id: 'about', icon: '👤', label: 'About', command: 'about' },
-  { id: 'projects', icon: '📂', label: 'Projects', command: 'projects' },
-  { id: 'skills', icon: '⚡', label: 'Skills', command: 'skills' },
-  { id: 'experience', icon: '💼', label: 'Experience', command: 'experience' },
-  { id: 'contact', icon: '📧', label: 'Contact', command: 'contact' },
+  { id: 'about', icon: '👤', label: 'About', contentType: 'about' as const },
+  { id: 'projects', icon: '📂', label: 'Projects', contentType: 'projects' as const },
+  { id: 'skills', icon: '⚡', label: 'Skills', contentType: 'skills' as const },
+  { id: 'experience', icon: '💼', label: 'Experience', contentType: 'experience' as const },
+  { id: 'contact', icon: '📧', label: 'Contact', contentType: 'contact' as const },
 ];
 
 export default function Desktop() {
@@ -69,7 +71,7 @@ export default function Desktop() {
   const [windows, setWindows] = useState<DesktopWindow[]>([
     {
       id: 'terminal',
-      title: 'visitor@portfolio: ~',
+      title: 'Terminal',
       icon: '⬛',
       isOpen: true,
       isMinimized: false,
@@ -78,20 +80,15 @@ export default function Desktop() {
   ]);
   const [activeWindowId, setActiveWindowId] = useState<string>('terminal');
   const [zCounter, setZCounter] = useState(100);
-  const terminalRefs = useRef<Map<string, { submitCommand: (cmd: string) => void }>>(new Map());
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
-    try {
-      localStorage.setItem('terminal-theme', t);
-    } catch {}
+    try { localStorage.setItem('terminal-theme', t); } catch {}
   }, []);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
-    try {
-      localStorage.setItem('terminal-lang', l);
-    } catch {}
+    try { localStorage.setItem('terminal-lang', l); } catch {}
   }, []);
 
   const focusWindow = useCallback((id: string) => {
@@ -99,14 +96,12 @@ export default function Desktop() {
     setZCounter((z) => z + 1);
   }, []);
 
-  const openWindow = useCallback((id: string, command?: string) => {
+  const openWindow = useCallback((id: string, contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact') => {
     setWindows((prev) => {
       const existing = prev.find((w) => w.id === id);
       if (existing) {
         return prev.map((w) =>
-          w.id === id
-            ? { ...w, isOpen: true, isMinimized: false }
-            : w
+          w.id === id ? { ...w, isOpen: true, isMinimized: false } : w
         );
       }
       const icon = DESKTOP_ICONS.find((d) => d.id === id);
@@ -114,12 +109,12 @@ export default function Desktop() {
         ...prev,
         {
           id,
-          title: id === 'terminal' ? 'visitor@portfolio: ~' : `${icon?.label || id}`,
+          title: icon?.label || id,
           icon: icon?.icon || '📄',
           isOpen: true,
           isMinimized: false,
           isMaximized: false,
-          initialCommand: command,
+          contentType,
         },
       ];
     });
@@ -127,10 +122,10 @@ export default function Desktop() {
   }, [focusWindow]);
 
   const closeWindow = useCallback((id: string) => {
-    if (id === 'terminal') return; // Can't close main terminal
     setWindows((prev) => prev.filter((w) => w.id !== id));
     if (activeWindowId === id) {
-      setActiveWindowId('terminal');
+      // Focus the most recently focused remaining window
+      setActiveWindowId('');
     }
   }, [activeWindowId]);
 
@@ -153,20 +148,11 @@ export default function Desktop() {
     setActiveWindowId('');
   }, []);
 
-  const handleIconClick = useCallback((iconId: string, command: string) => {
+  const handleIconDoubleClick = useCallback((iconId: string, contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact') => {
     if (iconId === 'terminal') {
       openWindow('terminal');
-    } else {
-      // For content icons, open terminal and run command
-      openWindow('terminal');
-      // We need to submit a command to the terminal
-      // We'll use a ref to the terminal's submit function
-      setTimeout(() => {
-        const terminalRef = terminalRefs.current.get('terminal');
-        if (terminalRef && command) {
-          terminalRef.submitCommand(command);
-        }
-      }, 100);
+    } else if (contentType) {
+      openWindow(iconId, contentType);
     }
   }, [openWindow]);
 
@@ -175,16 +161,13 @@ export default function Desktop() {
     if (!win) return;
 
     if (win.isMinimized) {
-      // Restore
       setWindows((prev) =>
         prev.map((w) => (w.id === id ? { ...w, isMinimized: false } : w))
       );
       focusWindow(id);
     } else if (activeWindowId === id) {
-      // Minimize
       minimizeWindow(id);
     } else {
-      // Focus
       focusWindow(id);
     }
   }, [windows, activeWindowId, focusWindow, minimizeWindow]);
@@ -192,21 +175,6 @@ export default function Desktop() {
   const handleToggleLang = useCallback(() => {
     setLang(lang === 'es' ? 'en' : 'es');
   }, [lang, setLang]);
-
-  // Get terminal commands context for the desktop
-  const getTerminalCtx = useCallback(() => ({
-    lang,
-    theme,
-    setTheme,
-    setLang,
-    getHistory: () => [],
-    getCommandHistory: () => [],
-    getAliases: () => ({}),
-    setAliases: () => {},
-    getCurrentDir: () => '~',
-    setCurrentDir: () => {},
-    getSessionStats: () => ({ commandCount: 0, startTime: Date.now() }),
-  }), [lang, theme, setTheme, setLang]);
 
   return (
     <div className="os-desktop" onClick={handleDesktopClick}>
@@ -217,39 +185,48 @@ export default function Desktop() {
             key={iconDef.id}
             icon={iconDef.icon}
             label={iconDef.label}
-            onClick={() => handleIconClick(iconDef.id, iconDef.command)}
+            onDoubleClick={() => handleIconDoubleClick(iconDef.id, iconDef.contentType)}
           />
         ))}
       </div>
 
       {/* Windows */}
-      {windows.map((win, index) => (
-        <Window
-          key={win.id}
-          id={win.id}
-          title={win.title}
-          icon={<span>{win.icon}</span>}
-          isOpen={win.isOpen && !win.isMinimized}
-          isMinimized={win.isMinimized}
-          isMaximized={win.isMaximized}
-          onClose={() => closeWindow(win.id)}
-          onMinimize={() => minimizeWindow(win.id)}
-          onMaximize={() => maximizeWindow(win.id)}
-          onFocus={() => focusWindow(win.id)}
-          zIndex={activeWindowId === win.id ? zCounter + 1 : 100 + index}
-          initialX={win.id === 'terminal' ? 80 : 120 + index * 40}
-          initialY={win.id === 'terminal' ? 40 : 60 + index * 40}
-        >
-          <Terminal
-            theme={theme}
-            lang={lang}
-            setTheme={setTheme}
-            setLang={setLang}
-            isEmbedded={true}
-            initialCommand={win.initialCommand}
-          />
-        </Window>
-      ))}
+      {windows.map((win, index) => {
+        // Determine z-index: active window on top, others in insertion order
+        const isActive = activeWindowId === win.id;
+        const winZ = isActive ? zCounter + 1 : 100 + index;
+
+        return (
+          <Window
+            key={win.id}
+            id={win.id}
+            title={win.title}
+            icon={<span>{win.icon}</span>}
+            isOpen={win.isOpen && !win.isMinimized}
+            isMinimized={win.isMinimized}
+            isMaximized={win.isMaximized}
+            onClose={() => closeWindow(win.id)}
+            onMinimize={() => minimizeWindow(win.id)}
+            onMaximize={() => maximizeWindow(win.id)}
+            onFocus={() => focusWindow(win.id)}
+            zIndex={winZ}
+            initialX={win.id === 'terminal' ? 100 : 160 + index * 30}
+            initialY={win.id === 'terminal' ? 30 : 50 + index * 30}
+          >
+            {win.contentType ? (
+              <ContentWindow contentType={win.contentType} lang={lang} />
+            ) : (
+              <Terminal
+                theme={theme}
+                lang={lang}
+                setTheme={setTheme}
+                setLang={setLang}
+                isEmbedded={true}
+              />
+            )}
+          </Window>
+        );
+      })}
 
       {/* Taskbar */}
       <Taskbar
