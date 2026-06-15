@@ -5,6 +5,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 const CELL_SIZE = 24;
+const PREVIEW_COUNT = 3;
 
 type Board = (string | null)[][];
 
@@ -20,6 +21,21 @@ const TETROMINOS = {
 
 type TetrominoKey = keyof typeof TETROMINOS;
 type Piece = { shape: number[][]; color: string; key: TetrominoKey };
+
+// SRS wall kick data
+const WALL_KICKS: Record<string, { x: number; y: number }[]> = {
+  normal: [
+    { x: 0, y: 0 }, { x: -1, y: 0 }, { x: 1, y: 0 },
+    { x: 0, y: -1 }, { x: -1, y: -1 }, { x: 1, y: -1 },
+    { x: 0, y: -2 }, { x: -1, y: 2 }, { x: 1, y: -2 },
+  ],
+  I: [
+    { x: 0, y: 0 }, { x: -2, y: 0 }, { x: 1, y: 0 },
+    { x: -2, y: -1 }, { x: 1, y: 2 },
+    { x: 0, y: 0 }, { x: 2, y: 0 }, { x: -1, y: 0 },
+    { x: 2, y: 1 }, { x: -1, y: -2 },
+  ],
+};
 
 function createEmptyBoard(): Board {
   return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
@@ -81,16 +97,36 @@ function clearFullLines(board: Board): { board: Board; cleared: number } {
   return { board: newBoard, cleared };
 }
 
-function randomPiece(): Piece {
+function randomPieceKey(): TetrominoKey {
   const keys = Object.keys(TETROMINOS) as TetrominoKey[];
-  const key = keys[Math.floor(Math.random() * keys.length)];
-  return { ...TETROMINOS[key], key };
+  return keys[Math.floor(Math.random() * keys.length)];
 }
 
 function ghostY(board: Board, shape: number[][], pos: { x: number; y: number }): number {
   let gy = pos.y;
   while (isValid(board, shape, { x: pos.x, y: gy + 1 })) gy++;
   return gy;
+}
+
+function getSpeed(level: number): number {
+  return Math.max(100, 800 - level * 70);
+}
+
+function loadHighScore(): number {
+  try {
+    const val = localStorage.getItem('tetris-highscore');
+    return val ? parseInt(val, 10) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveHighScore(score: number): void {
+  try {
+    localStorage.setItem('tetris-highscore', String(score));
+  } catch {
+    // localStorage not available
+  }
 }
 
 interface GameState {
@@ -102,6 +138,37 @@ interface GameState {
   level: number;
   gameOver: boolean;
   paused: boolean;
+  queue: TetrominoKey[];
+  holdPiece: TetrominoKey | null;
+  canHold: boolean;
+  highScore: number;
+}
+
+function fillQueue(queue: TetrominoKey[]): TetrominoKey[] {
+  const result = [...queue];
+  while (result.length < PREVIEW_COUNT + 1) {
+    result.push(randomPieceKey());
+  }
+  return result;
+}
+
+function initGameState(): GameState {
+  const queue = fillQueue([]);
+  const key = queue.shift()!;
+  return {
+    board: createEmptyBoard(),
+    piece: { ...TETROMINOS[key], key },
+    pos: { x: 3, y: 0 },
+    score: 0,
+    lines: 0,
+    level: 1,
+    gameOver: false,
+    paused: false,
+    queue: fillQueue(queue),
+    holdPiece: null,
+    canHold: true,
+    highScore: loadHighScore(),
+  };
 }
 
 function tick(state: GameState): GameState {
@@ -112,7 +179,6 @@ function tick(state: GameState): GameState {
     return { ...state, pos: newPos };
   }
 
-  // Place piece
   const newBoard = placePiece(state.board, state.piece.shape, state.piece.color, state.pos);
   const { board: clearedBoard, cleared } = clearFullLines(newBoard);
 
@@ -121,39 +187,41 @@ function tick(state: GameState): GameState {
   const newLines = state.lines + cleared;
   const newLevel = Math.floor(newLines / 10) + 1;
 
-  // Spawn new piece
-  const piece = randomPiece();
+  const queue = [...state.queue];
+  const key = queue.shift()!;
   const startPos = { x: 3, y: 0 };
-  if (!isValid(clearedBoard, piece.shape, startPos)) {
-    return { ...state, board: clearedBoard, score: newScore, lines: newLines, level: newLevel, gameOver: true };
+  const newPiece = { ...TETROMINOS[key], key };
+
+  if (!isValid(clearedBoard, newPiece.shape, startPos)) {
+    const hs = Math.max(newScore, state.highScore);
+    saveHighScore(hs);
+    return { ...state, board: clearedBoard, score: newScore, lines: newLines, level: newLevel, gameOver: true, highScore: hs };
   }
 
-  return { board: clearedBoard, piece, pos: startPos, score: newScore, lines: newLines, level: newLevel, gameOver: false, paused: false };
-}
-
-function getSpeed(level: number): number {
-  return Math.max(100, 1000 - (level - 1) * 100);
+  return {
+    board: clearedBoard,
+    piece: newPiece,
+    pos: startPos,
+    score: newScore,
+    lines: newLines,
+    level: newLevel,
+    gameOver: false,
+    paused: false,
+    queue: fillQueue(queue),
+    holdPiece: state.holdPiece,
+    canHold: true,
+    highScore: Math.max(newScore, state.highScore),
+  };
 }
 
 export default function TetrisGame() {
-  const [gs, setGs] = useState<GameState>({
-    board: createEmptyBoard(),
-    piece: randomPiece(),
-    pos: { x: 3, y: 0 },
-    score: 0,
-    lines: 0,
-    level: 1,
-    gameOver: false,
-    paused: false,
-  });
-
+  const [gs, setGs] = useState<GameState>(initGameState);
   const gsRef = useRef(gs);
   const tickRef = useRef(tick);
 
   useEffect(() => { gsRef.current = gs; });
   useEffect(() => { tickRef.current = tick; });
 
-  // Game loop
   useEffect(() => {
     if (gs.gameOver || gs.paused) return;
     const id = setInterval(() => {
@@ -177,13 +245,9 @@ export default function TetrisGame() {
     setGs((prev) => {
       if (prev.gameOver || prev.paused) return prev;
       const rotated = rotateShape(prev.piece.shape);
-      // Try basic rotation
-      if (isValid(prev.board, rotated, prev.pos)) {
-        return { ...prev, piece: { ...prev.piece, shape: rotated } };
-      }
-      // Wall kicks
-      for (const dx of [-1, 1, -2, 2]) {
-        const kickPos = { ...prev.pos, x: prev.pos.x + dx };
+      const kicks = prev.piece.key === 'I' ? WALL_KICKS.I : WALL_KICKS.normal;
+      for (const kick of kicks) {
+        const kickPos = { x: prev.pos.x + kick.x, y: prev.pos.y + kick.y };
         if (isValid(prev.board, rotated, kickPos)) {
           return { ...prev, piece: { ...prev.piece, shape: rotated }, pos: kickPos };
         }
@@ -201,6 +265,37 @@ export default function TetrisGame() {
     });
   }, []);
 
+  const holdPiece = useCallback(() => {
+    setGs((prev) => {
+      if (prev.gameOver || prev.paused || !prev.canHold) return prev;
+      const queue = [...prev.queue];
+      const key = queue.shift()!;
+      const newPiece = { ...TETROMINOS[key], key };
+      const startPos = { x: 3, y: 0 };
+
+      if (prev.holdPiece) {
+        const held = prev.holdPiece;
+        return {
+          ...prev,
+          piece: { ...TETROMINOS[held], key: held },
+          pos: startPos,
+          holdPiece: prev.piece.key,
+          queue: fillQueue(queue),
+          canHold: false,
+        };
+      }
+
+      return {
+        ...prev,
+        piece: newPiece,
+        pos: startPos,
+        holdPiece: prev.piece.key,
+        queue: fillQueue(queue),
+        canHold: false,
+      };
+    });
+  }, []);
+
   const togglePause = useCallback(() => {
     setGs((prev) => {
       if (prev.gameOver) return prev;
@@ -209,19 +304,9 @@ export default function TetrisGame() {
   }, []);
 
   const resetGame = useCallback(() => {
-    setGs({
-      board: createEmptyBoard(),
-      piece: randomPiece(),
-      pos: { x: 3, y: 0 },
-      score: 0,
-      lines: 0,
-      level: 1,
-      gameOver: false,
-      paused: false,
-    });
+    setGs(initGameState());
   }, []);
 
-  // Keyboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const current = gsRef.current;
@@ -238,15 +323,15 @@ export default function TetrisGame() {
         ArrowUp: () => rotatePiece(),
         z: () => rotatePiece(),
         x: () => rotatePiece(),
+        c: () => holdPiece(),
       };
       const action = actions[e.key];
       if (action) { e.preventDefault(); action(); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [move, hardDrop, rotatePiece, resetGame, togglePause]);
+  }, [move, hardDrop, rotatePiece, holdPiece, resetGame, togglePause]);
 
-  // Touch
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -262,7 +347,6 @@ export default function TetrisGame() {
     else if (dy > 0) { hardDrop(); }
   }, [move, hardDrop, rotatePiece]);
 
-  // Display
   const displayBoard = gs.board.map((row) => [...row]);
   if (!gs.gameOver) {
     for (let r = 0; r < gs.piece.shape.length; r++) {
@@ -280,34 +364,74 @@ export default function TetrisGame() {
 
   const ghost = gs.gameOver ? gs.pos.y : ghostY(gs.board, gs.piece.shape, gs.pos);
 
+  const renderMiniPiece = (key: TetrominoKey) => {
+    const p = TETROMINOS[key];
+    return (
+      <div className="tetris-mini-piece">
+        {p.shape.map((row, ry) => (
+          <div key={ry} className="tetris-mini-row">
+            {row.map((cell, cx) => (
+              <div
+                key={cx}
+                className={`tetris-mini-cell ${cell ? 'tetris-mini-cell--filled' : ''}`}
+                style={cell ? { backgroundColor: p.color } : undefined}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="game-container" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="game-header">
         <span className="game-score">Score: {gs.score}</span>
         <span className="game-controls">Level: {gs.level}</span>
         <span className="game-controls">Lines: {gs.lines}</span>
+        <span className="game-controls" style={{ color: '#ffb86c' }}>Best: {gs.highScore}</span>
       </div>
 
-      <div className="tetris-board" style={{ width: BOARD_WIDTH * CELL_SIZE, height: BOARD_HEIGHT * CELL_SIZE }}>
-        {displayBoard.map((row, y) =>
-          row.map((cell, x) => {
-            let isGhost = false;
-            if (!cell && !gs.gameOver) {
-              const sr = y - ghost;
-              const sc = x - gs.pos.x;
-              if (sr >= 0 && sr < gs.piece.shape.length && sc >= 0 && sc < gs.piece.shape[sr].length && gs.piece.shape[sr][sc]) {
-                isGhost = true;
+      <div className="tetris-layout">
+        <div className="tetris-sidebar tetris-sidebar--left">
+          <div className="tetris-sidebar-label">Hold</div>
+          <div className="tetris-mini-box">
+            {gs.holdPiece ? renderMiniPiece(gs.holdPiece) : <div className="tetris-mini-empty">-</div>}
+          </div>
+        </div>
+
+        <div className="tetris-board" style={{ width: BOARD_WIDTH * CELL_SIZE, height: BOARD_HEIGHT * CELL_SIZE }}>
+          {displayBoard.map((row, y) =>
+            row.map((cell, x) => {
+              let isGhost = false;
+              if (!cell && !gs.gameOver) {
+                const sr = y - ghost;
+                const sc = x - gs.pos.x;
+                if (sr >= 0 && sr < gs.piece.shape.length && sc >= 0 && sc < gs.piece.shape[sr].length && gs.piece.shape[sr][sc]) {
+                  isGhost = true;
+                }
               }
-            }
-            return (
-              <div
-                key={`${y}-${x}`}
-                className={`tetris-cell ${cell ? 'tetris-cell--filled' : ''} ${isGhost ? 'tetris-cell--ghost' : ''}`}
-                style={{ width: CELL_SIZE - 1, height: CELL_SIZE - 1, left: x * CELL_SIZE, top: y * CELL_SIZE, backgroundColor: cell || undefined }}
-              />
-            );
-          })
-        )}
+              return (
+                <div
+                  key={`${y}-${x}`}
+                  className={`tetris-cell ${cell ? 'tetris-cell--filled' : ''} ${isGhost ? 'tetris-cell--ghost' : ''}`}
+                  style={{ width: CELL_SIZE - 1, height: CELL_SIZE - 1, left: x * CELL_SIZE, top: y * CELL_SIZE, backgroundColor: cell || undefined }}
+                />
+              );
+            })
+          )}
+        </div>
+
+        <div className="tetris-sidebar tetris-sidebar--right">
+          <div className="tetris-sidebar-label">Next</div>
+          <div className="tetris-preview-stack">
+            {gs.queue.slice(0, PREVIEW_COUNT).map((key, i) => (
+              <div key={`${key}-${i}`} className="tetris-mini-box">
+                {renderMiniPiece(key)}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {gs.gameOver && (
@@ -315,6 +439,7 @@ export default function TetrisGame() {
           <div className="game-overlay-text">
             <div className="game-over-title">GAME OVER</div>
             <div className="game-over-score">Score: {gs.score}</div>
+            {gs.score >= gs.highScore && <div className="game-over-hint" style={{ color: '#ffb86c' }}>NEW HIGH SCORE!</div>}
             <div className="game-over-hint">Press ENTER to restart</div>
           </div>
         </div>
@@ -330,9 +455,10 @@ export default function TetrisGame() {
       )}
 
       <div className="game-footer">
-        <span>← → Move</span>
-        <span>↑ Rotate</span>
-        <span>↓ Hard drop</span>
+        <span>&#8592; &#8594; Move</span>
+        <span>&#8593; Rotate</span>
+        <span>&#8595; Drop</span>
+        <span>C Hold</span>
         <span>ESC Pause</span>
       </div>
     </div>

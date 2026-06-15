@@ -41,6 +41,33 @@ export default function NotepadApp() {
     URL.revokeObjectURL(url);
   }, [content, fileName]);
 
+  const handleExportPdf = useCallback(() => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${fileName}</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      margin: 2.5cm;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #000;
+    }
+  </style>
+</head>
+<body>${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+</html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }, [content, fileName]);
+
   const handleNameSubmit = useCallback(() => {
     setIsEditingName(false);
     if (!fileName.trim()) setFileName('untitled.txt');
@@ -67,6 +94,7 @@ export default function NotepadApp() {
         <button className="notepad-btn" onClick={handleNew} title="New">New</button>
         <button className="notepad-btn" onClick={handleSave} title="Save (Ctrl+S)">Save</button>
         <button className="notepad-btn" onClick={handleDownload} title="Download">Download</button>
+        <button className="notepad-btn" onClick={handleExportPdf} title="Export PDF">Export PDF</button>
         <div className="notepad-spacer" />
         <label className="notepad-toggle">
           <input type="checkbox" checked={wordWrap} onChange={(e) => setWordWrap(e.target.checked)} />

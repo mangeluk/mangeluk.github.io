@@ -7,20 +7,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import type { Theme, Lang } from '@/types/terminal';
 import { isValidTheme, isValidLang } from '@/lib/theme';
 
-// Import all command modules
-import '@/lib/commands/help';
-import '@/lib/commands/content';
-import '@/lib/commands/utility';
-import '@/lib/commands/ai';
-import '@/lib/commands/filesystem';
-import '@/lib/commands/extras';
-import '@/lib/commands/env';
-import '@/lib/commands/system';
-import '@/lib/commands/process';
-import '@/lib/commands/fileops';
-import '@/lib/commands/textproc';
-import '@/lib/commands/packages';
-
 import Terminal from '../Terminal/Terminal';
 import Window from './Window';
 import DesktopIcon from './DesktopIcon';
@@ -38,6 +24,7 @@ import { MinesweeperGame } from '../Games';
 import { BreakoutGame } from '../Games';
 import { FlappyBirdGame } from '../Games';
 import { ChessGame } from '../Games';
+import { SolitaireGame } from '../Games';
 import { CalculatorApp } from '../Utilities';
 import { NotepadApp } from '../Utilities';
 import { WeatherApp } from '../Utilities';
@@ -46,6 +33,8 @@ import { FileManagerApp } from '../Utilities';
 import { CalendarApp } from '../Utilities';
 import { SystemMonitorApp } from '../Utilities';
 import { MusicPlayerApp } from '../Utilities';
+import { PomodoroApp } from '../Utilities';
+import { QRCodeApp } from '../Utilities';
 
 interface DesktopWindow {
   id: string;
@@ -59,9 +48,9 @@ interface DesktopWindow {
   /** Command to auto-submit when terminal opens */
   initialCommand?: string;
   /** If set, window renders a game */
-  gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess';
+  gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess' | 'solitaire';
   /** If set, window renders a utility app */
-  utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer';
+  utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer' | 'pomodoro' | 'qrcode';
 }
 
 const DESKTOP_ICONS = [
@@ -84,6 +73,7 @@ const GAME_ICONS: Record<string, { icon: string; label: string }> = {
   breakout: { icon: '🧱', label: 'Breakout' },
   flappybird: { icon: '🐦', label: 'Flappy Bird' },
   chess: { icon: '♟️', label: 'Chess' },
+  solitaire: { icon: '🃏', label: 'Solitaire' },
 };
 
 const UTILITY_ICONS: Record<string, { icon: string; label: string }> = {
@@ -95,6 +85,8 @@ const UTILITY_ICONS: Record<string, { icon: string; label: string }> = {
   calendar: { icon: '📅', label: 'Calendar' },
   sysmonitor: { icon: '📊', label: 'System Monitor' },
   musicplayer: { icon: '🎵', label: 'Music Player' },
+  pomodoro: { icon: '🍅', label: 'Pomodoro' },
+  qrcode: { icon: '📱', label: 'QR Code' },
 };
 
 export default function Desktop() {
@@ -103,6 +95,10 @@ export default function Desktop() {
       const stored = localStorage.getItem('terminal-theme');
       if (stored && isValidTheme(stored)) return stored;
     } catch {}
+    // Auto-detect from OS preference
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
     return 'dark';
   }
 
@@ -130,6 +126,7 @@ export default function Desktop() {
   const [zCounter, setZCounter] = useState(100);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [iconContextMenu, setIconContextMenu] = useState<{ x: number; y: number; iconId: string } | null>(null);
 
   // Apply saved font size on mount
   useEffect(() => {
@@ -163,8 +160,8 @@ export default function Desktop() {
   const openWindow = useCallback((
     id: string,
     contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact',
-    gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess',
-    utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer',
+    gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess' | 'solitaire',
+    utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer' | 'pomodoro' | 'qrcode',
   ) => {
     setWindows((prev) => {
       const existing = prev.find((w) => w.id === id);
@@ -270,6 +267,28 @@ export default function Desktop() {
     }
   }, [openWindow]);
 
+  const handleIconRightClick = useCallback((e: { x: number; y: number; iconId: string }) => {
+    setIconContextMenu(e);
+  }, []);
+
+  const handleIconContextOpen = useCallback(() => {
+    if (!iconContextMenu) return;
+    const iconDef = DESKTOP_ICONS.find((d) => d.id === iconContextMenu.iconId);
+    if (iconDef) {
+      handleIconDoubleClick(iconContextMenu.iconId, iconDef.contentType);
+    }
+    setIconContextMenu(null);
+  }, [iconContextMenu, handleIconDoubleClick]);
+
+  const handleIconContextProperties = useCallback(() => {
+    if (!iconContextMenu) return;
+    const iconDef = DESKTOP_ICONS.find((d) => d.id === iconContextMenu.iconId);
+    if (iconDef) {
+      window.alert(`${iconDef.label}\nID: ${iconDef.id}\nType: ${iconDef.contentType ?? 'terminal'}`);
+    }
+    setIconContextMenu(null);
+  }, [iconContextMenu]);
+
   const handleTaskbarAppClick = useCallback((id: string) => {
     const win = windows.find((w) => w.id === id);
     if (!win) return;
@@ -294,11 +313,11 @@ export default function Desktop() {
     if (type === 'terminal') {
       openWindow('terminal');
     } else if (type === 'game') {
-      openWindow(id, undefined, id as 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess');
+      openWindow(id, undefined, id as 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess' | 'solitaire');
     } else if (type === 'content' && contentType) {
       openWindow(id, contentType as 'about' | 'projects' | 'skills' | 'experience' | 'contact');
     } else if (type === 'utility') {
-      openWindow(id, undefined, undefined, id as 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer');
+      openWindow(id, undefined, undefined, id as 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer' | 'pomodoro' | 'qrcode');
     }
   }, [openWindow]);
 
@@ -314,6 +333,7 @@ export default function Desktop() {
       case 'breakout': return <BreakoutGame />;
       case 'flappybird': return <FlappyBirdGame />;
       case 'chess': return <ChessGame />;
+      case 'solitaire': return <SolitaireGame />;
       default: return <div>Game not found</div>;
     }
   }, [lang]);
@@ -328,6 +348,8 @@ export default function Desktop() {
       case 'calendar': return <CalendarApp />;
       case 'sysmonitor': return <SystemMonitorApp />;
       case 'musicplayer': return <MusicPlayerApp />;
+      case 'pomodoro': return <PomodoroApp />;
+      case 'qrcode': return <QRCodeApp />;
       default: return <div>App not found</div>;
     }
   }, [theme, lang, setTheme, setLang]);
@@ -341,7 +363,9 @@ export default function Desktop() {
             key={iconDef.id}
             icon={iconDef.icon}
             label={iconDef.label}
+            iconId={iconDef.id}
             onDoubleClick={() => handleIconDoubleClick(iconDef.id, iconDef.contentType)}
+            onRightClick={handleIconRightClick}
           />
         ))}
       </div>
@@ -421,6 +445,68 @@ export default function Desktop() {
           onAbout={handleContextAbout}
         />
       )}
+
+      {/* Icon Context Menu */}
+      {iconContextMenu && (
+        <IconContextMenu
+          x={iconContextMenu.x}
+          y={iconContextMenu.y}
+          onClose={() => setIconContextMenu(null)}
+          onOpen={handleIconContextOpen}
+          onProperties={handleIconContextProperties}
+        />
+      )}
+    </div>
+  );
+}
+
+interface IconContextMenuProps {
+  x: number;
+  y: number;
+  onClose: () => void;
+  onOpen: () => void;
+  onProperties: () => void;
+}
+
+function IconContextMenu({ x, y, onClose, onOpen, onProperties }: IconContextMenuProps) {
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [onClose]);
+
+  const adjustedX = Math.min(x, window.innerWidth - 180);
+  const adjustedY = Math.min(y, window.innerHeight - 100);
+
+  return (
+    <div
+      ref={menuRef}
+      className="os-context-menu"
+      style={{ top: adjustedY, left: adjustedX }}
+      role="menu"
+      aria-label="Icon context menu"
+    >
+      <button className="os-context-menu__item" onClick={onOpen} role="menuitem">
+        <span className="os-context-menu__icon">📂</span>
+        <span className="os-context-menu__label">Open</span>
+      </button>
+      <button className="os-context-menu__item" onClick={onProperties} role="menuitem">
+        <span className="os-context-menu__icon">ℹ️</span>
+        <span className="os-context-menu__label">Properties</span>
+      </button>
     </div>
   );
 }

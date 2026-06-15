@@ -3,22 +3,67 @@
 // src/components/Desktop/DesktopIcon.tsx
 // Clickable desktop icon with emoji image and label.
 
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 interface DesktopIconProps {
   icon: string;
   label: string;
   onDoubleClick: () => void;
+  onRightClick?: (e: { x: number; y: number; iconId: string }) => void;
+  iconId: string;
 }
 
-export default function DesktopIcon({ icon, label, onDoubleClick }: DesktopIconProps) {
+export default function DesktopIcon({ icon, label, onDoubleClick, onRightClick, iconId }: DesktopIconProps) {
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragActive, setIsDragActive] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
+  const dragMoved = useRef(false);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    dragStart.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+    dragMoved.current = false;
+
+    const handleMouseMove = (me: MouseEvent) => {
+      const dx = me.clientX - dragStart.current.x;
+      const dy = me.clientY - dragStart.current.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        dragMoved.current = true;
+        setIsDragActive(true);
+      }
+      if (dragMoved.current) {
+        setOffset({ x: dx, y: dy });
+      }
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      if (dragMoved.current) {
+        setOffset({ x: 0, y: 0 });
+        setTimeout(() => setIsDragActive(false), 150);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, [offset]);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRightClick?.({ x: e.clientX, y: e.clientY, iconId });
+  }, [onRightClick, iconId]);
+
   return (
     <button
-      className="desktop-icon"
+      className={`desktop-icon ${isDragActive ? 'desktop-icon--dragging' : ''}`}
       onDoubleClick={(e) => {
         e.stopPropagation();
-        onDoubleClick();
+        if (!dragMoved.current) onDoubleClick();
       }}
+      onMouseDown={handleMouseDown}
+      onContextMenu={handleContextMenu}
       aria-label={`Open ${label}`}
     >
       <div className="desktop-icon__image">

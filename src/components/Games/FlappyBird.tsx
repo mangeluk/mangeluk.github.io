@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 const CANVAS_WIDTH = 320;
 const CANVAS_HEIGHT = 480;
-const GRAVITY = 0.25;
+const GRAVITY = 0.15;
 const FLAP_STRENGTH = -4.5;
 const PIPE_WIDTH = 52;
 const PIPE_GAP = 150;

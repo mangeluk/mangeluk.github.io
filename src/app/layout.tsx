@@ -25,30 +25,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${jetbrainsMono.variable} h-full`} suppressHydrationWarning>
       <head>
-        {/*
-          Inline script: reads localStorage before hydration and sets data-theme on <html>
-          to prevent flash of wrong theme (Req. 14.6).
-          Must run synchronously before React renders.
-        */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-(function(){
-  try {
-    var t = localStorage.getItem('terminal-theme');
-    var validThemes = ['dark', 'light', 'matrix', 'dracula', 'nord', 'monokai'];
-    if (validThemes.includes(t)) {
-      document.documentElement.setAttribute('data-theme', t);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  } catch(e) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-})();
-            `.trim(),
-          }}
-        />
+        <meta name="color-scheme" content="dark" />
       </head>
       <body
         className="min-h-full"

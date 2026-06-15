@@ -6,3 +6,5 @@ export { default as FileManagerApp } from './FileManagerApp';
 export { default as CalendarApp } from './CalendarApp';
 export { default as SystemMonitorApp } from './SystemMonitorApp';
 export { default as MusicPlayerApp } from './MusicPlayerApp';
+export { default as PomodoroApp } from './PomodoroApp';
+export { default as QRCodeApp } from './QRCodeApp';

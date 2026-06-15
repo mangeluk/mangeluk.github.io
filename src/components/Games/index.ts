@@ -8,3 +8,4 @@ export { default as MinesweeperGame } from './Minesweeper';
 export { default as BreakoutGame } from './Breakout';
 export { default as FlappyBirdGame } from './FlappyBird';
 export { default as ChessGame } from './Chess';
+export { default as SolitaireGame } from './Solitaire';

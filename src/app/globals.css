@@ -333,6 +333,11 @@ body {
   outline-offset: 2px;
 }
 
+.desktop-icon--dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+
 .desktop-icon__image {
   width: 48px;
   height: 48px;
@@ -385,6 +390,19 @@ body {
 
 .os-window--minimized {
   display: none;
+}
+
+.os-window--minimizing {
+  transform: scale(0.1) translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease-in;
+}
+
+.os-window--restoring {
+  transform: scale(1);
+  opacity: 1;
+  transition: all 0.2s ease-out;
 }
 
 /* ─── Window Title Bar ─────────────────────────────────────────────────────── */
@@ -493,6 +511,17 @@ body {
   border-right: 2px solid rgba(255, 255, 255, 0.15);
   border-bottom: 2px solid rgba(255, 255, 255, 0.15);
 }
+
+/* ─── Window Resize Handles (8 directions) ──────────────────────────────────── */
+.os-resize-handle { position: absolute; z-index: 10; }
+.os-resize-n { top: -3px; left: 8px; right: 8px; height: 6px; cursor: n-resize; }
+.os-resize-s { bottom: -3px; left: 8px; right: 8px; height: 6px; cursor: s-resize; }
+.os-resize-e { right: -3px; top: 8px; bottom: 8px; width: 6px; cursor: e-resize; }
+.os-resize-w { left: -3px; top: 8px; bottom: 8px; width: 6px; cursor: w-resize; }
+.os-resize-ne { top: -3px; right: -3px; width: 12px; height: 12px; cursor: ne-resize; }
+.os-resize-nw { top: -3px; left: -3px; width: 12px; height: 12px; cursor: nw-resize; }
+.os-resize-se { bottom: -3px; right: -3px; width: 12px; height: 12px; cursor: se-resize; }
+.os-resize-sw { bottom: -3px; left: -3px; width: 12px; height: 12px; cursor: sw-resize; }
 
 /* ─── Taskbar ──────────────────────────────────────────────────────────────── */
 .os-taskbar {
@@ -1168,6 +1197,18 @@ body {
   padding: 12px 16px;
   transition: background 0.1s;
   cursor: default;
+  animation: notif-slide-in 0.3s ease-out;
+}
+
+@keyframes notif-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .os-notification-center__item:hover {
@@ -2876,3 +2917,525 @@ body {
 [data-theme="light"] .chess-board { border-color: #999; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
 [data-theme="light"] .chess-cell-light { background: #f5f0e8; }
 [data-theme="light"] .chess-cell-dark { background: #c8a882; }
+
+/* ─── Solitaire ────────────────────────────────────────────────────────── */
+.solitaire-container {
+  overflow-y: auto;
+}
+
+.solitaire-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 600px;
+  padding: 4px 0;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.solitaire-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+  flex-shrink: 0;
+}
+
+.solitaire-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.solitaire-top-left {
+  display: flex;
+  gap: 8px;
+}
+
+.solitaire-top-right {
+  display: flex;
+  gap: 8px;
+}
+
+.solitaire-pile {
+  width: 70px;
+  height: 100px;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.solitaire-empty-pile {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed rgba(255,255,255,0.15);
+  border-radius: 6px;
+}
+
+.solitaire-empty-pile--foundation::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.solitaire-card {
+  width: 70px;
+  height: 100px;
+  border-radius: 6px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  user-select: none;
+}
+
+.solitaire-card--back {
+  background: linear-gradient(135deg, #16213e 0%, #0f0f23 100%);
+  border: 1px solid rgba(0,255,159,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.solitaire-card-back-pattern {
+  width: 50px;
+  height: 70px;
+  border: 1px solid rgba(0,255,159,0.2);
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 3px,
+    rgba(0,255,159,0.05) 3px,
+    rgba(0,255,159,0.05) 6px
+  );
+}
+
+.solitaire-card--front {
+  background: #f8f8f2;
+  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.solitaire-card-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.solitaire-card-corner--tl {
+  top: 3px;
+  left: 4px;
+}
+
+.solitaire-card-corner--br {
+  bottom: 3px;
+  right: 4px;
+  transform: rotate(180deg);
+}
+
+.solitaire-card-rank {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.solitaire-card-suit {
+  font-size: 10px;
+}
+
+.solitaire-card-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  opacity: 0.7;
+}
+
+.solitaire-pile-count {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  color: #888;
+  z-index: 2;
+}
+
+.solitaire-tableau {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.solitaire-tableau-col {
+  width: 70px;
+  min-height: 140px;
+  position: relative;
+  padding-top: 24px;
+}
+
+.solitaire-card-wrapper {
+  position: absolute;
+  left: 0;
+  width: 70px;
+  height: 100px;
+  cursor: pointer;
+}
+
+.solitaire-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+/* ─── Tetris extras ────────────────────────────────────────────────────── */
+.tetris-layout {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.tetris-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 70px;
+}
+
+.tetris-sidebar--left,
+.tetris-sidebar--right {
+  align-items: center;
+}
+
+.tetris-sidebar-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tetris-mini-box {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  min-width: 56px;
+}
+
+.tetris-mini-empty {
+  color: #555;
+  font-size: 16px;
+}
+
+.tetris-preview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tetris-mini-piece {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tetris-mini-row {
+  display: flex;
+  gap: 1px;
+}
+
+.tetris-mini-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 1px;
+}
+
+.tetris-mini-cell--filled {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+}
+
+/* ─── Pomodoro ─────────────────────────────────────────────────────────── */
+.pomo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  height: 100%;
+  background: #1a1a2e;
+}
+
+.pomo-modes {
+  display: flex;
+  gap: 8px;
+}
+
+.pomo-mode-btn {
+  padding: 8px 16px;
+  background: #0f0f23;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: #888;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pomo-mode-btn:hover { color: #e0e0e0; }
+
+.pomo-mode-btn--active {
+  background: #16213e;
+}
+
+.pomo-ring-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pomo-time-display {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pomo-time-text {
+  font-size: 32px;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.pomo-mode-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pomo-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pomo-ctrl-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #16213e;
+  color: #e0e0e0;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.pomo-ctrl-btn:hover { background: #1f3056; }
+
+.pomo-ctrl-btn--main {
+  width: 56px;
+  height: 56px;
+  color: #0f0f23;
+  font-size: 18px;
+}
+
+.pomo-sessions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pomo-sessions-label {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pomo-sessions-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.pomo-session-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #16213e;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: background 0.3s;
+}
+
+.pomo-session-dot--filled {
+  box-shadow: 0 0 6px currentColor;
+}
+
+.pomo-sessions-count {
+  font-size: 12px;
+  color: #555;
+}
+
+/* ─── QR Code ──────────────────────────────────────────────────────────── */
+.qr-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  background: #1a1a2e;
+}
+
+.qr-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qr-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.qr-input {
+  background: #0f0f23;
+  color: #e0e0e0;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+.qr-input:focus { border-color: rgba(0,255,159,0.4); }
+
+.qr-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.qr-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qr-option-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.qr-opt-btn {
+  padding: 6px 12px;
+  background: #0f0f23;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  color: #888;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.qr-opt-btn:hover { color: #e0e0e0; border-color: rgba(255,255,255,0.2); }
+
+.qr-opt-btn--active {
+  color: #00ff9f;
+  border-color: #00ff9f;
+  background: #16213e;
+}
+
+.qr-generate-btn {
+  padding: 10px 20px;
+  background: #00cc6a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  align-self: flex-start;
+}
+
+.qr-generate-btn:hover { background: #00e680; }
+
+.qr-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: #0f0f23;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.qr-canvas {
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.qr-download-btn {
+  padding: 8px 16px;
+  background: #16213e;
+  color: #00ff9f;
+  border: 1px solid rgba(0,255,159,0.3);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.qr-download-btn:hover { background: #1f3056; }
+
+.qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  color: #555;
+}
+
+.qr-placeholder-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+
+.qr-placeholder-text {
+  font-size: 13px;
+}

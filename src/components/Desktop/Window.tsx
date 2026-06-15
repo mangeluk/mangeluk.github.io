@@ -24,7 +24,9 @@ interface WindowProps {
   initialHeight?: number;
 }
 
-type SnapPosition = 'left' | 'right' | 'maximized' | null;
+type SnapPosition = 'left' | 'right' | 'maximized' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null;
+
+type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 export default function Window({
   title,
@@ -48,18 +50,60 @@ export default function Window({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [snapPreview, setSnapPreview] = useState<SnapPosition>(null);
+  const [minimizeState, setMinimizeState] = useState<'none' | 'minimizing' | 'minimized' | 'restoring'>('none');
   const dragOffset = useRef({ x: 0, y: 0 });
-  const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0, pos: { x: 0, y: 0 } });
+  const resizeDir = useRef<ResizeDirection>('se');
   const preSnapPos = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  const prevMinimized = useRef(false);
 
-  const SNAP_THRESHOLD = 20;
+  const EDGE_THRESHOLD = 20;
+  const CORNER_THRESHOLD = 40;
 
   const getSnapPosition = useCallback((x: number, y: number): SnapPosition => {
-    if (y < SNAP_THRESHOLD) return 'maximized';
-    if (x < SNAP_THRESHOLD) return 'left';
-    if (x > window.innerWidth - SNAP_THRESHOLD) return 'right';
+    const atTop = y < EDGE_THRESHOLD;
+    const atLeft = x < EDGE_THRESHOLD;
+    const atRight = x > window.innerWidth - EDGE_THRESHOLD;
+    const atBottom = y > window.innerHeight - 48 - EDGE_THRESHOLD;
+
+    // Corners (larger threshold, checked first)
+    if (atTop && atLeft && x < CORNER_THRESHOLD && y < CORNER_THRESHOLD) return 'top-left';
+    if (atTop && atRight && x > window.innerWidth - CORNER_THRESHOLD && y < CORNER_THRESHOLD) return 'top-right';
+    if (atBottom && atLeft && x < CORNER_THRESHOLD && y > window.innerHeight - 48 - CORNER_THRESHOLD) return 'bottom-left';
+    if (atBottom && atRight && x > window.innerWidth - CORNER_THRESHOLD && y > window.innerHeight - 48 - CORNER_THRESHOLD) return 'bottom-right';
+
+    // Edges
+    if (atTop) return 'maximized';
+    if (atLeft) return 'left';
+    if (atRight) return 'right';
+
     return null;
   }, []);
+
+  const applySnap = useCallback((snap: SnapPosition) => {
+    const taskbarH = 48;
+    if (snap === 'maximized') {
+      onMaximize();
+    } else if (snap === 'left') {
+      setPos({ x: 0, y: 0 });
+      setSize({ w: window.innerWidth / 2, h: window.innerHeight - taskbarH });
+    } else if (snap === 'right') {
+      setPos({ x: window.innerWidth / 2, y: 0 });
+      setSize({ w: window.innerWidth / 2, h: window.innerHeight - taskbarH });
+    } else if (snap === 'top-left') {
+      setPos({ x: 0, y: 0 });
+      setSize({ w: window.innerWidth / 2, h: (window.innerHeight - taskbarH) / 2 });
+    } else if (snap === 'top-right') {
+      setPos({ x: window.innerWidth / 2, y: 0 });
+      setSize({ w: window.innerWidth / 2, h: (window.innerHeight - taskbarH) / 2 });
+    } else if (snap === 'bottom-left') {
+      setPos({ x: 0, y: (window.innerHeight - taskbarH) / 2 });
+      setSize({ w: window.innerWidth / 2, h: (window.innerHeight - taskbarH) / 2 });
+    } else if (snap === 'bottom-right') {
+      setPos({ x: window.innerWidth / 2, y: (window.innerHeight - taskbarH) / 2 });
+      setSize({ w: window.innerWidth / 2, h: (window.innerHeight - taskbarH) / 2 });
+    }
+  }, [onMaximize]);
 
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -119,10 +163,29 @@ export default function Window({
       if (isResizing) {
         const dx = e.clientX - resizeStart.current.x;
         const dy = e.clientY - resizeStart.current.y;
-        setSize({
-          w: Math.max(400, resizeStart.current.w + dx),
-          h: Math.max(300, resizeStart.current.h + dy),
-        });
+        const dir = resizeDir.current;
+        let newW = size.w;
+        let newH = size.h;
+        let newX = pos.x;
+        let newY = pos.y;
+
+        if (dir.includes('e')) {
+          newW = Math.max(400, resizeStart.current.w + dx);
+        }
+        if (dir.includes('w')) {
+          newW = Math.max(400, resizeStart.current.w - dx);
+          newX = resizeStart.current.pos.x + (resizeStart.current.w - newW);
+        }
+        if (dir.includes('s')) {
+          newH = Math.max(300, resizeStart.current.h + dy);
+        }
+        if (dir.includes('n')) {
+          newH = Math.max(300, resizeStart.current.h - dy);
+          newY = resizeStart.current.pos.y + (resizeStart.current.h - newH);
+        }
+
+        setSize({ w: newW, h: newH });
+        setPos({ x: newX, y: newY });
       }
     };
 
@@ -144,16 +207,7 @@ export default function Window({
         const clientX = 'clientX' in e ? e.clientX : e.touches[0].clientX;
         const clientY = 'clientY' in e ? e.clientY : e.touches[0].clientY;
         const finalSnap = getSnapPosition(clientX, clientY);
-
-        if (finalSnap === 'maximized') {
-          onMaximize();
-        } else if (finalSnap === 'left') {
-          setPos({ x: 0, y: 0 });
-          setSize({ w: window.innerWidth / 2, h: window.innerHeight - 48 });
-        } else if (finalSnap === 'right') {
-          setPos({ x: window.innerWidth / 2, y: 0 });
-          setSize({ w: window.innerWidth / 2, h: window.innerHeight - 48 });
-        }
+        applySnap(finalSnap);
       }
       setSnapPreview(null);
       setIsDragging(false);
@@ -171,26 +225,48 @@ export default function Window({
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleUp as EventListener);
     };
-  }, [isDragging, isResizing, snapPreview, getSnapPosition, onMaximize]);
+  }, [isDragging, isResizing, snapPreview, getSnapPosition, applySnap, size, pos]);
 
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+  // Minimize/restore animation
+  useEffect(() => {
+    if (isMinimized && !prevMinimized.current) {
+      setMinimizeState('minimizing');
+      const timer = setTimeout(() => setMinimizeState('minimized'), 250);
+      return () => clearTimeout(timer);
+    } else if (!isMinimized && prevMinimized.current) {
+      setMinimizeState('restoring');
+      const timer = setTimeout(() => setMinimizeState('none'), 200);
+      return () => clearTimeout(timer);
+    }
+    prevMinimized.current = isMinimized;
+  }, [isMinimized]);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent, dir: ResizeDirection) => {
     e.preventDefault();
     e.stopPropagation();
     onFocus();
     setIsResizing(true);
+    resizeDir.current = dir;
     resizeStart.current = {
       x: e.clientX,
       y: e.clientY,
       w: size.w,
       h: size.h,
+      pos: { x: pos.x, y: pos.y },
     };
-  }, [size.w, size.h, onFocus]);
+  }, [size.w, size.h, pos.x, pos.y, onFocus]);
 
-  if (!isOpen) return null;
+  const isFullyMinimized = minimizeState === 'minimized';
+
+  if (!isOpen && minimizeState !== 'minimizing' && minimizeState !== 'restoring') return null;
 
   const windowStyle: React.CSSProperties = isMaximized
     ? { position: 'fixed', top: 0, left: 0, width: '100%', height: 'calc(100% - 48px)', zIndex }
     : { position: 'fixed', top: pos.y, left: pos.x, width: size.w, height: size.h, zIndex };
+
+  const animClass = minimizeState === 'minimizing' ? 'os-window--minimizing'
+    : minimizeState === 'restoring' ? 'os-window--restoring'
+    : '';
 
   return (
     <>
@@ -200,17 +276,21 @@ export default function Window({
           className="os-window__snap-preview"
           style={{
             position: 'fixed',
-            top: 0,
-            left: snapPreview === 'left' ? 0 : '50%',
-            width: '50%',
-            height: 'calc(100% - 48px)',
+            left: (snapPreview === 'left' || snapPreview === 'top-left' || snapPreview === 'bottom-left') ? 0
+              : (snapPreview === 'right' || snapPreview === 'top-right' || snapPreview === 'bottom-right') ? '50%' : 0,
+            top: (snapPreview === 'top-left' || snapPreview === 'top-right') ? 0
+              : (snapPreview === 'bottom-left' || snapPreview === 'bottom-right') ? 'calc(50% - 24px)' : 0,
+            width: (snapPreview === 'left' || snapPreview === 'right') ? '50%' : '50%',
+            height: (snapPreview === 'top-left' || snapPreview === 'top-right' || snapPreview === 'bottom-left' || snapPreview === 'bottom-right')
+              ? 'calc(50% - 24px)'
+              : 'calc(100% - 48px)',
             zIndex: zIndex - 1,
           }}
         />
       )}
 
       <div
-        className={`os-window ${isMinimized ? 'os-window--minimized' : ''}`}
+        className={`os-window ${isFullyMinimized ? 'os-window--minimized' : ''} ${animClass}`}
         style={windowStyle}
         onMouseDown={onFocus}
         onTouchStart={onFocus}
@@ -262,12 +342,18 @@ export default function Window({
           {children}
         </div>
 
-        {/* Resize handle (bottom-right corner) */}
+        {/* Resize handles (8 directions) */}
         {!isMaximized && (
-          <div
-            className="os-window__resize"
-            onMouseDown={handleResizeStart}
-          />
+          <>
+            <div className="os-resize-handle os-resize-n" onMouseDown={(e) => handleResizeStart(e, 'n')} />
+            <div className="os-resize-handle os-resize-s" onMouseDown={(e) => handleResizeStart(e, 's')} />
+            <div className="os-resize-handle os-resize-e" onMouseDown={(e) => handleResizeStart(e, 'e')} />
+            <div className="os-resize-handle os-resize-w" onMouseDown={(e) => handleResizeStart(e, 'w')} />
+            <div className="os-resize-handle os-resize-ne" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
+            <div className="os-resize-handle os-resize-nw" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
+            <div className="os-resize-handle os-resize-se" onMouseDown={(e) => handleResizeStart(e, 'se')} />
+            <div className="os-resize-handle os-resize-sw" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
+          </>
         )}
       </div>
     </>

@@ -27,6 +27,10 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
   const inputRef = (ref as React.RefObject<HTMLInputElement>) ?? localRef;
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [reverseSearch, setReverseSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchIndex, setSearchIndex] = useState(-1);
+  const [savedValue, setSavedValue] = useState('');
 
   // Auto-focus on mount (Req. 1.1)
   useEffect(() => {
@@ -90,6 +94,48 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
       return;
     }
 
+    // Ctrl+W — delete previous word
+    if (e.key === 'w' && e.ctrlKey) {
+      e.preventDefault();
+      const val = inputRef.current?.value || '';
+      const pos = inputRef.current?.selectionStart || val.length;
+      const before = val.substring(0, pos);
+      const after = val.substring(pos);
+      const newBefore = before.replace(/\S+\s*$/, '');
+      const newVal = newBefore + after;
+      onChange(newVal);
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.selectionStart = inputRef.current.selectionEnd = newBefore.length;
+        }
+      }, 0);
+      return;
+    }
+
+    // Ctrl+K — delete to end of line
+    if (e.key === 'k' && e.ctrlKey) {
+      e.preventDefault();
+      const val = inputRef.current?.value || '';
+      const pos = inputRef.current?.selectionStart || val.length;
+      onChange(val.substring(0, pos));
+      return;
+    }
+
+    // Ctrl+R — reverse history search
+    if (e.key === 'r' && e.ctrlKey) {
+      e.preventDefault();
+      if (reverseSearch) {
+        // Find next match going further back
+        findNextSearchMatch(searchQuery, searchIndex + 1);
+      } else {
+        setSavedValue(value);
+        setReverseSearch(true);
+        setSearchQuery('');
+        setSearchIndex(-1);
+      }
+      return;
+    }
+
     // Ctrl+A — move to beginning (Home)
     if (e.key === 'a' && e.ctrlKey) {
       e.preventDefault();
@@ -107,6 +153,15 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
 
     if (e.key === 'Enter') {
       e.preventDefault();
+      if (reverseSearch) {
+        setReverseSearch(false);
+        setSearchQuery('');
+        setSearchIndex(-1);
+        if (value) {
+          onSubmit(value);
+        }
+        return;
+      }
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
         onChange(suggestions[selectedIndex]);
         setSuggestions([]);
@@ -134,9 +189,29 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
       e.preventDefault();
       handleAutocomplete();
     } else if (e.key === 'Escape') {
+      if (reverseSearch) {
+        setReverseSearch(false);
+        setSearchQuery('');
+        setSearchIndex(-1);
+        onChange(savedValue);
+        return;
+      }
       setSuggestions([]);
       setSelectedIndex(-1);
     }
+  }
+
+  function findNextSearchMatch(query: string, startIdx: number) {
+    if (!query) return;
+    const lowerQuery = query.toLowerCase();
+    for (let i = startIdx; i < commandHistory.length; i++) {
+      if (commandHistory[i].toLowerCase().includes(lowerQuery)) {
+        setSearchIndex(i);
+        onChange(commandHistory[i]);
+        return;
+      }
+    }
+    // No more matches — keep current state
   }
 
   function handleAutocomplete() {
@@ -234,22 +309,49 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
     <div className="w-full">
       <div className="flex items-center gap-2 py-1">
         {/* Prompt with colored segments */}
-        <span
-          style={{ whiteSpace: 'nowrap', userSelect: 'none' }}
-          aria-hidden="true"
-        >
-          <span style={{ color: 'var(--prompt-user)' }}>visitor@portfolio</span>
-          <span style={{ color: 'var(--text-secondary)' }}>:</span>
+        {reverseSearch ? (
+          <span
+            style={{ whiteSpace: 'nowrap', userSelect: 'none' }}
+            aria-hidden="true"
+          >
+            <span style={{ color: 'var(--text-secondary)' }}>(reverse-i-search)&apos;{searchQuery}&apos;: </span>
+          </span>
+        ) : (
+          <span
+            style={{ whiteSpace: 'nowrap', userSelect: 'none' }}
+            aria-hidden="true"
+          >
+            <span style={{ color: 'var(--prompt-user)' }}>visitor@portfolio</span>
+            <span style={{ color: 'var(--text-secondary)' }}>:</span>
           <span style={{ color: 'var(--prompt-path)' }}>{prompt.split(':')[1]?.replace(' $', '') || '~'}</span>
           <span style={{ color: 'var(--text-secondary)' }}>$ </span>
-        </span>
+          </span>
+        )}
 
         {/* Input */}
         <input
           ref={inputRef}
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={reverseSearch ? (commandHistory[searchIndex] || '') : value}
+          onChange={(e) => {
+            if (reverseSearch) {
+              const newQuery = e.target.value;
+              setSearchQuery(newQuery);
+              // Search from beginning
+              for (let i = 0; i < commandHistory.length; i++) {
+                if (commandHistory[i].toLowerCase().includes(newQuery.toLowerCase())) {
+                  setSearchIndex(i);
+                  onChange(commandHistory[i]);
+                  return;
+                }
+              }
+              // No match found
+              setSearchIndex(-1);
+              onChange('');
+            } else {
+              onChange(e.target.value);
+            }
+          }}
           onKeyDown={handleKeyDown}
           disabled={disabled}
           autoComplete="off"

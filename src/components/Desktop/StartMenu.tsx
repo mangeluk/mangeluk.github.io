@@ -34,12 +34,15 @@ const MENU_ITEMS: MenuItem[] = [
   { id: 'breakout', icon: '🧱', label: 'Breakout', category: 'games' },
   { id: 'flappybird', icon: '🐦', label: 'Flappy Bird', category: 'games' },
   { id: 'chess', icon: '♟️', label: 'Chess', category: 'games' },
+  { id: 'solitaire', icon: '🃏', label: 'Solitaire', category: 'games' },
   { id: 'calculator', icon: '🧮', label: 'Calculator', category: 'utilities' },
   { id: 'notepad', icon: '📝', label: 'Notepad', category: 'utilities' },
   { id: 'weather', icon: '🌤️', label: 'Weather', category: 'utilities' },
   { id: 'calendar', icon: '📅', label: 'Calendar', category: 'utilities' },
   { id: 'sysmonitor', icon: '📊', label: 'System Monitor', category: 'utilities' },
   { id: 'musicplayer', icon: '🎵', label: 'Music Player', category: 'utilities' },
+  { id: 'pomodoro', icon: '🍅', label: 'Pomodoro', category: 'utilities' },
+  { id: 'qrcode', icon: '📱', label: 'QR Code', category: 'utilities' },
 ];
 
 const CATEGORIES = {

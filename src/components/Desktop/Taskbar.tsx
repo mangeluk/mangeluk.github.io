@@ -66,6 +66,15 @@ export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStar
   const [currentTime, setCurrentTime] = useState('');
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [isCharging, setIsCharging] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setIsOnline(navigator.onLine);
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -81,6 +90,78 @@ export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStar
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, [lang]);
+
+  // Online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Battery status
+  useEffect(() => {
+    let mounted = true;
+
+    interface BatteryLike {
+      level: number;
+      charging: boolean;
+      addEventListener: (type: string, listener: () => void) => void;
+      removeEventListener: (type: string, listener: () => void) => void;
+    }
+
+    const updateBattery = (b: BatteryLike) => {
+      if (!mounted) return;
+      setBatteryLevel(Math.round(b.level * 100));
+      setIsCharging(b.charging);
+    };
+
+    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+      void (navigator as Record<string, unknown> as { getBattery: () => Promise<BatteryLike> }).getBattery().then((b) => {
+        if (!mounted) return;
+        updateBattery(b);
+        b.addEventListener('levelchange', () => updateBattery(b));
+        b.addEventListener('chargingchange', () => updateBattery(b));
+      }).catch(() => { /* battery API not available */ });
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Periodic simulated notifications
+  useEffect(() => {
+    const pool: Omit<Notification, 'id' | 'timestamp'>[] = [
+      { icon: '📧', title: 'New email', message: 'New email from recruiter@tech.com' },
+      { icon: '⭐', title: 'GitHub', message: 'Your repo got 5 new stars' },
+      { icon: '🌤️', title: 'Weather update', message: '18°C Partly cloudy' },
+      { icon: '💻', title: 'System monitor', message: 'Memory usage: 78% — consider closing some apps' },
+      { icon: '⬆️', title: 'System update', message: 'System update available: v2.0' },
+      { icon: '💼', title: 'LinkedIn', message: 'New follower on LinkedIn' },
+      { icon: '✅', title: 'Build status', message: 'Build completed successfully' },
+    ];
+
+    const addNotification = () => {
+      const template = pool[Math.floor(Math.random() * pool.length)];
+      const newNotif: Notification = {
+        ...template,
+        id: `sim-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        timestamp: 'Just now',
+      };
+      setNotifications(prev => {
+        const updated = [newNotif, ...prev];
+        return updated.length > 10 ? updated.slice(0, 10) : updated;
+      });
+    };
+
+    const interval = setInterval(addNotification, 30000 + Math.random() * 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleClearAll = useCallback(() => {
     setNotifications([]);
@@ -128,11 +209,25 @@ export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStar
         </button>
 
         {/* System tray icons */}
+        {mounted && (
         <div className="os-taskbar__system-icons">
-          <span className="os-taskbar__sys-icon" title="WiFi: Connected">📡</span>
+          <span
+            className="os-taskbar__sys-icon"
+            title={isOnline ? 'WiFi: Connected' : 'WiFi: Disconnected'}
+          >
+            {isOnline ? '📡' : '🚫'}
+          </span>
           <span className="os-taskbar__sys-icon" title="Volume: 80%">🔊</span>
-          <span className="os-taskbar__sys-icon" title="Battery: 92%">🔋</span>
+          <span
+            className="os-taskbar__sys-icon"
+            title={batteryLevel !== null ? `Battery: ${batteryLevel}%${isCharging ? ' (Charging)' : ''}` : 'Battery: N/A'}
+          >
+            {batteryLevel !== null
+              ? `${batteryLevel}%${isCharging ? ' ⚡' : ''}`
+              : '🔋'}
+          </span>
         </div>
+        )}
 
         {/* Notification bell */}
         <button

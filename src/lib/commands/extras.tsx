@@ -424,7 +424,7 @@ registerCommand({
 // ------------------------------
 // Comando fortune (frases aleatorias)
 // ------------------------------
-const fortunes = [
+const fortunesEs = [
   "El código que no escribes es el código que no tienes que mantener.",
   "Primero, resuelve el problema. Luego, escribe el código.",
   "Nunca es tarde para refactorizar.",
@@ -435,15 +435,36 @@ const fortunes = [
   "No te preocupes por si alguien va a robar tu código. Preocúpate por si lo quieren.",
   "La consistencia es la clave del éxito.",
   "El debugging es el doble de difícil que escribir el código en primer lugar. Por lo tanto, si escribes el código de la manera más inteligente posible, no eres lo suficientemente inteligente para depurarlo.",
-  "Caminar sobre el agua y desarrollar software a partir de una especificación son dos cosas muy fáciles… si ambas están congeladas."
+  "Caminar sobre el agua y desarrollar software a partir de una especificación son dos cosas muy fáciles… si ambas están congeladas.",
+  "Un buen programador es alguien que siempre mira ambos lados de la pared antes de pintar.",
+  "No hay lugar como 127.0.0.1.",
+  "El 90% de las cosas se puede hacer en un 10% del tiempo, pero ese último 10% es lo que te quita el otro 90%."
+];
+
+const fortunesEn = [
+  "The code you don't write is the code you don't have to maintain.",
+  "First, solve the problem. Then, write the code.",
+  "It's never too late to refactor.",
+  "The best line of code is the one that doesn't exist.",
+  "Always test your code.",
+  "Your future self will thank you for the comments you write today.",
+  "Simplicity is the ultimate sophistication.",
+  "Don't worry about someone stealing your code. Worry about them wanting it.",
+  "Consistency is the key to success.",
+  "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are not smart enough to debug it.",
+  "Walking on water and developing software from a specification are both easy if both are frozen.",
+  "A good programmer is someone who always looks both ways before crossing a one-way street.",
+  "There's no place like 127.0.0.1.",
+  "90% of the things can be done in 10% of the time, but that last 10% is what takes the other 90%."
 ];
 
 registerCommand({
   name: 'fortune',
   description: 'Muestra una frase aleatoria sobre programación',
-  execute() {
-    const randomIndex = Math.floor(Math.random() * fortunes.length);
-    return { type: 'text', content: fortunes[randomIndex] };
+  execute(_args, ctx) {
+    const pool = ctx.lang === 'es' ? fortunesEs : fortunesEn;
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return { type: 'text', content: pool[randomIndex] };
   }
 });
 
@@ -726,4 +747,22 @@ registerCommand({
   execute(_args, ctx) {
     return { type: 'jsx', content: <TicTacToeComponent lang={ctx.lang} /> };
   }
+});
+
+// ------------------------------
+// Comando sl (easter egg)
+// ------------------------------
+registerCommand({
+  name: 'sl',
+  description: 'Steam locomotive (easter egg when you mistype ls)',
+  execute() {
+    const train = `
+       ____
+  ____/ / / /
+ / __  / / / / /
+| (_  / /_/ / /__
+ \\___/\\__,_/____/
+    🚂 chugga chugga`;
+    return { type: 'text', content: train };
+  },
 });

@@ -363,8 +363,12 @@ registerCommand({
 registerCommand({
   name: 'cowsay',
   description: 'cowsay <texto> — Easter egg: vaca que dice cosas / Easter egg: talking cow',
-  execute(args, _ctx) {
-    const text = args.length > 0 ? args.join(' ') : 'Hello!';
+  execute(args, ctx) {
+    const defaultMessages: Record<'es' | 'en', string> = {
+      es: '¡Hola mundo!',
+      en: 'Hello world!',
+    };
+    const text = args.length > 0 ? args.join(' ') : defaultMessages[ctx.lang];
     const bubble = ` ${'_'.repeat(text.length + 2)} 
 < ${text} >
  ${'-'.repeat(text.length + 2)} 
