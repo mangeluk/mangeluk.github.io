@@ -23,7 +23,7 @@ export interface CommandContext {
   // Estado global compartido para nuevas funcionalidades
   getCurrentDir: () => string;
   setCurrentDir: (dir: string) => void;
-  getSessionStats: () => { commandCount: number; startTime: number };
+  getSessionStats: () => { commandCount: number; startTime: number | null };
 }
 
 export type CommandResult =
@@ -32,7 +32,7 @@ export type CommandResult =
   | { type: 'error'; content: string }
   | { type: 'clear' }
   | { type: 'banner' }
-  | { type: 'async'; loader: string; promise: Promise<{ text: string; metadata?: any }> };
+  | { type: 'async'; loader: string; promise: Promise<{ text: string; metadata?: Record<string, unknown> }> };
 
 export interface CommandDefinition {
   name: string;

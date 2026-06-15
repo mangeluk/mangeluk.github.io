@@ -87,7 +87,7 @@ registerCommand({
   description: 'Muestra estadísticas de la sesión y de la carrera',
   execute(_args, ctx) {
     const { commandCount, startTime } = ctx.getSessionStats();
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
     const minutes = Math.floor(elapsed / 60);
     const seconds = elapsed % 60;
 

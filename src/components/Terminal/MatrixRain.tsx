@@ -10,7 +10,6 @@ const MatrixRain: React.FC<MatrixRainProps> = ({ duration = 5000 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number | null>(null);
   const dropsRef = useRef<number[]>([]);
-  const startTimeRef = useRef<number>(Date.now());
 
   const fontSize = 14;
 

@@ -23,57 +23,78 @@ import InputLine from './InputLine';
 import WelcomeBanner from './WelcomeBanner';
 import MobileKeyboard from '../MobileKeyboard';
 
+let idCounter = 0;
 function genId(): string {
-  return typeof crypto !== 'undefined' && crypto.randomUUID
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
+  return `entry-${++idCounter}-${Date.now()}`;
 }
 
 export default function Terminal() {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [theme, setThemeState] = useState<Theme>('dark');
-  const [lang, setLangState] = useState<Lang>('es');
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [aliases, setAliases] = useState<Record<string, string>>({});
-  // Nuevos estados globales
-  const [currentDir, setCurrentDirState] = useState<string>('~');
-  const sessionStatsStartTime = useRef(Date.now());
-  const [commandCount, setCommandCount] = useState(0);
-  const [currentTime, setCurrentTime] = useState<string>('');
-
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // ── On mount: restore theme, lang, command history and aliases from localStorage ──
-  useEffect(() => {
+  function getInitialTheme(): Theme {
     try {
-      const storedTheme = localStorage.getItem('terminal-theme');
-      const storedLang = localStorage.getItem('terminal-lang');
-      const storedCmdHistory = localStorage.getItem('terminal-cmd-history');
-      const storedAliases = localStorage.getItem('terminal-aliases');
-      
-      if (storedTheme && isValidTheme(storedTheme)) setThemeState(storedTheme);
-      if (storedLang && isValidLang(storedLang)) setLangState(storedLang);
-      if (storedCmdHistory) setCommandHistory(JSON.parse(storedCmdHistory));
-      if (storedAliases) setAliases(JSON.parse(storedAliases));
-    } catch {
-      // localStorage unavailable — use defaults
-    }
+      const stored = localStorage.getItem('terminal-theme');
+      if (stored && isValidTheme(stored)) return stored;
+    } catch {}
+    return 'dark';
+  }
 
-    // Show WelcomeBanner as first entry (Req. 9.2)
-    setHistory([
+  function getInitialLang(): Lang {
+    try {
+      const stored = localStorage.getItem('terminal-lang');
+      if (stored && isValidLang(stored)) return stored;
+    } catch {}
+    return 'es';
+  }
+
+  function getInitialCommandHistory(): string[] {
+    try {
+      const stored = localStorage.getItem('terminal-cmd-history');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return [];
+  }
+
+  function getInitialAliases(): Record<string, string> {
+    try {
+      const stored = localStorage.getItem('terminal-aliases');
+      if (stored) return JSON.parse(stored);
+    } catch {}
+    return {};
+  }
+
+  function getInitialHistory(): HistoryEntry[] {
+    return [
       {
         id: genId(),
         type: 'banner',
         content: '__BANNER__',
         timestamp: Date.now(),
       },
-    ]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    ];
+  }
+
+  const [history, setHistory] = useState<HistoryEntry[]>(getInitialHistory);
+  const [inputValue, setInputValue] = useState('');
+  const [theme, setThemeState] = useState<Theme>(getInitialTheme);
+  const [lang, setLangState] = useState<Lang>(getInitialLang);
+  const [commandHistory, setCommandHistory] = useState<string[]>(getInitialCommandHistory);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [aliases, setAliases] = useState<Record<string, string>>(getInitialAliases);
+  // Nuevos estados globales
+  const [currentDir, setCurrentDirState] = useState<string>('~');
+  const sessionStatsStartTime = useRef<number | null>(null);
+  const [commandCount, setCommandCount] = useState(0);
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [mounted, setMounted] = useState(false);
+
+  // Initialize sessionStatsStartTime once on mount
+  useEffect(() => {
+    sessionStatsStartTime.current = Date.now();
+    setMounted(true);
   }, []);
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // ── Persist command history and aliases to localStorage when they change ──
   useEffect(() => {
@@ -266,7 +287,7 @@ export default function Terminal() {
 
       setHistory((prev) => [...prev, inputEntry, outputEntry]);
     },
-    [lang, theme, setTheme, setLang, history, commandHistory, aliases]
+    [lang, theme, setTheme, setLang, history, commandHistory, aliases, currentDir, commandCount, setCommandCount, setCommandHistory, setHistoryIndex, setInputValue, setIsLoading, setAliases, setCurrentDirState]
   );
 
   // ── ArrowUp navigation (Req. 1.7) ──
@@ -302,10 +323,10 @@ export default function Terminal() {
 
   return (
     <div
-      data-theme={theme}
       onClick={handlePanelClick}
       className="terminal-panel fade-in flex flex-col h-full overflow-hidden rounded-lg shadow-2xl"
       style={{ backgroundColor: 'var(--bg-terminal)' }}
+      suppressHydrationWarning
     >
       {/* Window Title Bar */}
       <div 
@@ -328,7 +349,7 @@ export default function Terminal() {
         </div>
         <div className="flex items-center gap-3">
           <div className="text-xs md:text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {currentTime}
+            {mounted ? currentTime : '—'}
           </div>
         </div>
       </div>

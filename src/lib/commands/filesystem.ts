@@ -11,7 +11,7 @@ interface FileSystemEntry {
 }
 
 // Estado global mutable para simular filesystem
-let fileSystem: Record<string, FileSystemEntry> = {
+const fileSystem: Record<string, FileSystemEntry> = {
   '~': {
     type: 'dir',
     children: {

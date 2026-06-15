@@ -33,7 +33,8 @@ export default function RootLayout({
 (function(){
   try {
     var t = localStorage.getItem('terminal-theme');
-    if (t === 'dark' || t === 'light' || t === 'matrix') {
+    var validThemes = ['dark', 'light', 'matrix', 'dracula', 'nord', 'monokai'];
+    if (validThemes.includes(t)) {
       document.documentElement.setAttribute('data-theme', t);
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
