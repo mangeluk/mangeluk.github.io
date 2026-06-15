@@ -22,6 +22,7 @@ interface TaskbarProps {
   onToggleLang: () => void;
   onStartClick: () => void;
   isStartMenuOpen: boolean;
+  role?: string;
 }
 
 const INITIAL_NOTIFICATIONS: Notification[] = [
@@ -62,11 +63,12 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
   },
 ];
 
-export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStartMenuOpen }: TaskbarProps) {
+export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStartMenuOpen, role }: TaskbarProps) {
   const [currentTime, setCurrentTime] = useState('');
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [notifOpen, setNotifOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [hoveredApp, setHoveredApp] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isCharging, setIsCharging] = useState(false);
@@ -173,7 +175,7 @@ export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStar
   const unreadCount = notifications.length;
 
   return (
-    <div className="os-taskbar">
+    <div className="os-taskbar" role={role}>
       {/* Start button */}
       <button
         className={`os-taskbar__start ${isStartMenuOpen ? 'os-taskbar__start--active' : ''}`}
@@ -190,14 +192,27 @@ export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStar
       {/* App shortcuts */}
       <div className="os-taskbar__apps">
         {apps.map((app) => (
-          <button
+          <div
             key={app.id}
-            className={`os-taskbar__app ${app.isActive ? 'os-taskbar__app--active' : ''} ${app.isMinimized ? 'os-taskbar__app--minimized' : ''}`}
-            onClick={app.onClick}
-            aria-label={app.title}
+            className="os-taskbar__app-wrapper"
+            onMouseEnter={() => setHoveredApp(app.id)}
+            onMouseLeave={() => setHoveredApp(null)}
           >
-            <span>{app.icon}</span>
-          </button>
+            <button
+              className={`os-taskbar__app ${app.isActive ? 'os-taskbar__app--active' : ''} ${app.isMinimized ? 'os-taskbar__app--minimized' : ''} ${app.id.includes('-') ? 'os-taskbar__app--multi' : ''}`}
+              onClick={app.onClick}
+              aria-label={app.title}
+            >
+              <span className="os-taskbar__app-icon">{app.icon}</span>
+              {app.id.includes('-') && <span className="os-taskbar__app-instance">{app.id.split('-').pop()}</span>}
+            </button>
+            {hoveredApp === app.id && (
+              <div className="os-taskbar__tooltip">
+                <span className="os-taskbar__tooltip-icon">{app.icon}</span>
+                <span className="os-taskbar__tooltip-title">{app.title}</span>
+              </div>
+            )}
+          </div>
         ))}
       </div>
 

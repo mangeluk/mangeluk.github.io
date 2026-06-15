@@ -52,11 +52,13 @@ export default function Window({
   const [snapPreview, setSnapPreview] = useState<SnapPosition>(null);
   const [minimizeState, setMinimizeState] = useState<'none' | 'minimizing' | 'minimized' | 'restoring'>('none');
   const [isSnapping, setIsSnapping] = useState(false);
+  const [isMaxAnimating, setIsMaxAnimating] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0, pos: { x: 0, y: 0 } });
   const resizeDir = useRef<ResizeDirection>('se');
   const preSnapPos = useRef({ x: 0, y: 0, w: 0, h: 0 });
   const prevMinimized = useRef(false);
+  const prevIsMaximized = useRef(isMaximized);
 
   const EDGE_THRESHOLD = 20;
   const CORNER_THRESHOLD = 40;
@@ -257,6 +259,16 @@ export default function Window({
     };
   }, [isDragging, isResizing, snapPreview, getSnapPosition, applySnap, size, pos]);
 
+  // Maximize/restore animation
+  useEffect(() => {
+    if (prevIsMaximized.current !== isMaximized) {
+      setIsMaxAnimating(true);
+      const timer = setTimeout(() => setIsMaxAnimating(false), 220);
+      prevIsMaximized.current = isMaximized;
+      return () => clearTimeout(timer);
+    }
+  }, [isMaximized]);
+
   // Minimize/restore animation
   useEffect(() => {
     if (isMinimized && !prevMinimized.current) {
@@ -306,7 +318,12 @@ export default function Window({
 
   if (!isOpen && minimizeState !== 'minimizing' && minimizeState !== 'restoring') return null;
 
-  const snapTransition = isSnapping ? 'all 150ms ease-out' : 'none';
+  const isAnimatingTransition = isMaxAnimating && !isDragging && !isResizing;
+  const snapTransition = isSnapping
+    ? 'all 150ms ease-out'
+    : isAnimatingTransition
+      ? 'width 0.2s ease-out, height 0.2s ease-out, top 0.2s ease-out, left 0.2s ease-out'
+      : 'none';
 
   const windowStyle: React.CSSProperties = isMaximized
     ? { position: 'fixed', top: 0, left: 0, width: '100%', height: 'calc(100% - 48px)', zIndex, transition: snapTransition }

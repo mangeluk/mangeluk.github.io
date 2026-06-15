@@ -7,6 +7,7 @@ interface SettingsAppProps {
   lang: string;
   setTheme: (t: string) => void;
   setLang: (l: string) => void;
+  onWallpaperChange?: (wallpaper: string) => void;
 }
 
 const THEMES = [
@@ -24,13 +25,26 @@ const FONT_SIZES = [
   { id: 'large', label: 'Large', value: '16px' },
 ];
 
+const WALLPAPERS = [
+  { id: 'default', label: 'Default', preview: "url('/bg.png')" },
+  { id: 'solid', label: 'Solid Dark', preview: '#0a0a0a' },
+  { id: 'gradient', label: 'Gradient', preview: 'linear-gradient(135deg, #0a0a0a 0%, #111 100%)' },
+  { id: 'none', label: 'None', preview: '#000000' },
+];
+
 function getInitialFontSize(): string {
   if (typeof window === 'undefined') return 'medium';
   return localStorage.getItem('terminal-font-size') || 'medium';
 }
 
-export default function SettingsApp({ theme, lang, setTheme, setLang }: SettingsAppProps) {
+function getInitialWallpaper(): string {
+  if (typeof window === 'undefined') return 'default';
+  return localStorage.getItem('desktop-wallpaper') || 'default';
+}
+
+export default function SettingsApp({ theme, lang, setTheme, setLang, onWallpaperChange }: SettingsAppProps) {
   const [fontSize, setFontSize] = useState(getInitialFontSize);
+  const [wallpaper, setWallpaper] = useState(getInitialWallpaper);
 
   const handleThemeChange = useCallback((t: string) => {
     setTheme(t);
@@ -47,14 +61,22 @@ export default function SettingsApp({ theme, lang, setTheme, setLang }: Settings
     document.documentElement.style.setProperty('--term-font-size', px);
   }, []);
 
+  const handleWallpaperChange = useCallback((wp: string) => {
+    setWallpaper(wp);
+    try { localStorage.setItem('desktop-wallpaper', wp); } catch {}
+    onWallpaperChange?.(wp);
+  }, [onWallpaperChange]);
+
   const handleReset = useCallback(() => {
     setTheme('dark');
     setLang('es');
     handleFontSizeChange('medium');
+    handleWallpaperChange('default');
     localStorage.removeItem('terminal-theme');
     localStorage.removeItem('terminal-lang');
     localStorage.removeItem('terminal-font-size');
-  }, [setTheme, setLang, handleFontSizeChange]);
+    localStorage.removeItem('desktop-wallpaper');
+  }, [setTheme, setLang, handleFontSizeChange, handleWallpaperChange]);
 
   return (
     <div className="settings-container">
@@ -106,6 +128,25 @@ export default function SettingsApp({ theme, lang, setTheme, setLang }: Settings
               onClick={() => handleFontSizeChange(f.id)}
             >
               {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <h3 className="settings-title">{lang === 'es' ? 'Fondo de pantalla' : 'Wallpaper'}</h3>
+        <div className="settings-wallpaper-grid">
+          {WALLPAPERS.map((w) => (
+            <button
+              key={w.id}
+              className={`settings-wallpaper-card ${wallpaper === w.id ? 'settings-wallpaper-card--active' : ''}`}
+              onClick={() => handleWallpaperChange(w.id)}
+            >
+              <div
+                className="settings-wallpaper-preview"
+                style={{ background: w.preview }}
+              />
+              <span className="settings-wallpaper-name">{w.label}</span>
             </button>
           ))}
         </div>

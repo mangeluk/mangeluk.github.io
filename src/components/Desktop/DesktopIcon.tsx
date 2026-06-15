@@ -59,6 +59,24 @@ export default function DesktopIcon({ icon, label, onDoubleClick, onRightClick, 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       if (!dragMoved.current) onDoubleClick();
+      return;
+    }
+
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      const container = (e.currentTarget as HTMLElement).parentElement;
+      if (!container) return;
+      const icons = Array.from(container.querySelectorAll<HTMLElement>('.desktop-icon'));
+      const idx = icons.indexOf(e.currentTarget as HTMLElement);
+      if (idx === -1) return;
+
+      let nextIdx = idx;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        nextIdx = (idx + 1) % icons.length;
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        nextIdx = (idx - 1 + icons.length) % icons.length;
+      }
+      icons[nextIdx].focus();
     }
   }, [onDoubleClick]);
 

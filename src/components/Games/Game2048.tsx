@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { playMerge, playClick } from '@/lib/sound';
 
 const GRID_SIZE = 4;
 const CELL_PX = 64;
@@ -289,6 +290,8 @@ function processMove(state: GameSnapshot, direction: 'left' | 'right' | 'up' | '
   const { grid: newGrid, score: moveScore, moved } = applyMove(state.grid, direction);
   if (!moved) return state;
 
+  if (moveScore > 0) playMerge();
+
   const [gridAfterRandom] = addRandomTile(newGrid);
   const newScore = state.score + moveScore;
   const newBest = Math.max(newScore, state.bestScore);
@@ -360,6 +363,7 @@ export default function Game2048() {
 
   const move = useCallback((direction: 'left' | 'right' | 'up' | 'down') => {
     const s = stateRef.current;
+    if (s.gameOver || (s.won && !s.keepPlaying)) return;
     const result = processMove(s, direction);
     if (result === s) return;
 
@@ -387,6 +391,7 @@ export default function Game2048() {
     setKeepPlaying(false);
     prevGridRef.current = newGrid;
     setTileMap(initTileMap(newGrid));
+    playClick();
   }, []);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {

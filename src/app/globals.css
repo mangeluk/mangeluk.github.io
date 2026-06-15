@@ -19,6 +19,35 @@
   --prompt-user: #50fa7b;
   --prompt-path: #8be9fd;
   --prompt-symbol: #50fa7b;
+  /* Game variables */
+  --game-panel-bg: #16213e;
+  --game-board-border: #555;
+  --chess-light: #EEEED2;
+  --chess-dark: #769656;
+  --chess-selected: #8297d3;
+  --chess-highlight: #6b8e5a;
+  --chess-last-move: #cdd16a;
+  --chess-check: #e57373;
+  --ms-board-bg: #bdb6b0;
+  --ms-board-border: #555;
+  --ms-hidden-start: #d4cfc7;
+  --ms-hidden-end: #a8a29e;
+  --ms-hidden-hover-start: #ddd8d0;
+  --ms-hidden-hover-end: #b8b2ae;
+  --ms-revealed-bg: #c8c2ba;
+  --ms-mine-bg: #e57373;
+  --ms-num-1: #1976D2;
+  --ms-num-2: #388E3C;
+  --ms-num-3: #D32F2F;
+  --ms-num-4: #7B1FA2;
+  --ms-num-5: #FF8F00;
+  --ms-num-6: #00838F;
+  --ms-num-7: #424242;
+  --ms-num-8: #78909C;
+  --tile-grid-bg: rgba(187, 173, 160, 0.3);
+  --tile-empty-bg: rgba(255, 255, 255, 0.05);
+  --solitaire-red: #ff4444;
+  --solitaire-black: #1a1a2e;
 }
 
 [data-theme="dark"] {
@@ -35,6 +64,34 @@
   --prompt-user: #50fa7b;
   --prompt-path: #8be9fd;
   --prompt-symbol: #50fa7b;
+  --game-panel-bg: #16213e;
+  --game-board-border: #555;
+  --chess-light: #EEEED2;
+  --chess-dark: #769656;
+  --chess-selected: #8297d3;
+  --chess-highlight: #6b8e5a;
+  --chess-last-move: #cdd16a;
+  --chess-check: #e57373;
+  --ms-board-bg: #bdb6b0;
+  --ms-board-border: #555;
+  --ms-hidden-start: #d4cfc7;
+  --ms-hidden-end: #a8a29e;
+  --ms-hidden-hover-start: #ddd8d0;
+  --ms-hidden-hover-end: #b8b2ae;
+  --ms-revealed-bg: #c8c2ba;
+  --ms-mine-bg: #e57373;
+  --ms-num-1: #1976D2;
+  --ms-num-2: #388E3C;
+  --ms-num-3: #D32F2F;
+  --ms-num-4: #7B1FA2;
+  --ms-num-5: #FF8F00;
+  --ms-num-6: #00838F;
+  --ms-num-7: #424242;
+  --ms-num-8: #78909C;
+  --tile-grid-bg: rgba(187, 173, 160, 0.3);
+  --tile-empty-bg: rgba(255, 255, 255, 0.05);
+  --solitaire-red: #ff4444;
+  --solitaire-black: #1a1a2e;
 }
 
 [data-theme="light"] {
@@ -51,6 +108,34 @@
   --prompt-user: #1565c0;
   --prompt-path: #2e7d32;
   --prompt-symbol: #2e7d32;
+  --game-panel-bg: #e8e4de;
+  --game-board-border: #999;
+  --chess-light: #EEEED2;
+  --chess-dark: #769656;
+  --chess-selected: #8297d3;
+  --chess-highlight: #6b8e5a;
+  --chess-last-move: #cdd16a;
+  --chess-check: #e57373;
+  --ms-board-bg: #d0cac2;
+  --ms-board-border: #999;
+  --ms-hidden-start: #e8e4de;
+  --ms-hidden-end: #c8c2bc;
+  --ms-hidden-hover-start: #f0ece6;
+  --ms-hidden-hover-end: #d8d2ca;
+  --ms-revealed-bg: #d8d2ca;
+  --ms-mine-bg: #ef9a9a;
+  --ms-num-1: #1565c0;
+  --ms-num-2: #2e7d32;
+  --ms-num-3: #c62828;
+  --ms-num-4: #6a1b9a;
+  --ms-num-5: #e65100;
+  --ms-num-6: #00695c;
+  --ms-num-7: #424242;
+  --ms-num-8: #607d8b;
+  --tile-grid-bg: rgba(187, 173, 160, 0.2);
+  --tile-empty-bg: rgba(0, 0, 0, 0.04);
+  --solitaire-red: #d32f2f;
+  --solitaire-black: #1a1a2e;
 }
 
 [data-theme="matrix"] {
@@ -67,6 +152,34 @@
   --prompt-user: #00ff41;
   --prompt-path: #00cccc;
   --prompt-symbol: #00ff41;
+  --game-panel-bg: #0a1a0a;
+  --game-board-border: #00bb2e;
+  --chess-light: #1a3a1a;
+  --chess-dark: #0a2a0a;
+  --chess-selected: #2a6a2a;
+  --chess-highlight: #1a5a1a;
+  --chess-last-move: #3a6a2a;
+  --chess-check: #ff4444;
+  --ms-board-bg: #0a2a0a;
+  --ms-board-border: #00bb2e;
+  --ms-hidden-start: #1a3a1a;
+  --ms-hidden-end: #0a2a0a;
+  --ms-hidden-hover-start: #2a4a2a;
+  --ms-hidden-hover-end: #1a3a1a;
+  --ms-revealed-bg: #1a3a1a;
+  --ms-mine-bg: #ff4444;
+  --ms-num-1: #00cccc;
+  --ms-num-2: #00ff41;
+  --ms-num-3: #ff4444;
+  --ms-num-4: #39ff14;
+  --ms-num-5: #ffff00;
+  --ms-num-6: #00cccc;
+  --ms-num-7: #00bb2e;
+  --ms-num-8: #00ff41;
+  --tile-grid-bg: rgba(0, 255, 65, 0.1);
+  --tile-empty-bg: rgba(0, 255, 65, 0.03);
+  --solitaire-red: #ff4444;
+  --solitaire-black: #0a2a0a;
 }
 
 [data-theme="matrix"] * {
@@ -87,6 +200,34 @@
   --prompt-user: #50fa7b;
   --prompt-path: #8be9fd;
   --prompt-symbol: #50fa7b;
+  --game-panel-bg: #44475a;
+  --game-board-border: #6272a4;
+  --chess-light: #6272a4;
+  --chess-dark: #44475a;
+  --chess-selected: #50fa7b;
+  --chess-highlight: #8be9fd;
+  --chess-last-move: #f1fa8c;
+  --chess-check: #ff5555;
+  --ms-board-bg: #44475a;
+  --ms-board-border: #6272a4;
+  --ms-hidden-start: #6272a4;
+  --ms-hidden-end: #44475a;
+  --ms-hidden-hover-start: #7280a4;
+  --ms-hidden-hover-end: #54576a;
+  --ms-revealed-bg: #525878;
+  --ms-mine-bg: #ff5555;
+  --ms-num-1: #8be9fd;
+  --ms-num-2: #50fa7b;
+  --ms-num-3: #ff5555;
+  --ms-num-4: #bd93f9;
+  --ms-num-5: #ffb86c;
+  --ms-num-6: #8be9fd;
+  --ms-num-7: #6272a4;
+  --ms-num-8: #f8f8f2;
+  --tile-grid-bg: rgba(98, 114, 164, 0.3);
+  --tile-empty-bg: rgba(255, 255, 255, 0.05);
+  --solitaire-red: #ff5555;
+  --solitaire-black: #44475a;
 }
 
 [data-theme="nord"] {
@@ -103,6 +244,34 @@
   --prompt-user: #a3be8c;
   --prompt-path: #88c0d0;
   --prompt-symbol: #a3be8c;
+  --game-panel-bg: #3b4252;
+  --game-board-border: #4c566a;
+  --chess-light: #d8dee9;
+  --chess-dark: #4c566a;
+  --chess-selected: #88c0d0;
+  --chess-highlight: #5e81ac;
+  --chess-last-move: #ebcb8b;
+  --chess-check: #bf616a;
+  --ms-board-bg: #3b4252;
+  --ms-board-border: #4c566a;
+  --ms-hidden-start: #4c566a;
+  --ms-hidden-end: #3b4252;
+  --ms-hidden-hover-start: #5c667a;
+  --ms-hidden-hover-end: #4b5262;
+  --ms-revealed-bg: #434c5e;
+  --ms-mine-bg: #bf616a;
+  --ms-num-1: #88c0d0;
+  --ms-num-2: #a3be8c;
+  --ms-num-3: #bf616a;
+  --ms-num-4: #b48ead;
+  --ms-num-5: #ebcb8b;
+  --ms-num-6: #8fbcbb;
+  --ms-num-7: #4c566a;
+  --ms-num-8: #eceff4;
+  --tile-grid-bg: rgba(76, 86, 106, 0.3);
+  --tile-empty-bg: rgba(255, 255, 255, 0.05);
+  --solitaire-red: #bf616a;
+  --solitaire-black: #3b4252;
 }
 
 [data-theme="monokai"] {
@@ -119,6 +288,34 @@
   --prompt-user: #a6e22e;
   --prompt-path: #66d9ef;
   --prompt-symbol: #a6e22e;
+  --game-panel-bg: #49483e;
+  --game-board-border: #75715e;
+  --chess-light: #75715e;
+  --chess-dark: #3e3d32;
+  --chess-selected: #a6e22e;
+  --chess-highlight: #66d9ef;
+  --chess-last-move: #e6db74;
+  --chess-check: #f92672;
+  --ms-board-bg: #3e3d32;
+  --ms-board-border: #75715e;
+  --ms-hidden-start: #75715e;
+  --ms-hidden-end: #3e3d32;
+  --ms-hidden-hover-start: #85816e;
+  --ms-hidden-hover-end: #4e4d42;
+  --ms-revealed-bg: #49483e;
+  --ms-mine-bg: #f92672;
+  --ms-num-1: #66d9ef;
+  --ms-num-2: #a6e22e;
+  --ms-num-3: #f92672;
+  --ms-num-4: #ae81ff;
+  --ms-num-5: #e6db74;
+  --ms-num-6: #66d9ef;
+  --ms-num-7: #75715e;
+  --ms-num-8: #f8f8f2;
+  --tile-grid-bg: rgba(117, 113, 94, 0.3);
+  --tile-empty-bg: rgba(255, 255, 255, 0.05);
+  --solitaire-red: #f92672;
+  --solitaire-black: #3e3d32;
 }
 
 /* ─── Base styles ───────────────────────────────────────────────────────────── */
@@ -128,6 +325,41 @@ body {
   color: var(--text-primary);
   font-family: var(--font-mono), 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   font-size: var(--term-font-size);
+}
+
+/* ─── Skip link (accessibility) ────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  z-index: 999999;
+  padding: 8px 16px;
+  background: var(--text-primary);
+  color: #0a0a0a;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  border-radius: 0 0 6px 6px;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ─── Focus indicators (accessibility) ─────────────────────────────────────── */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+}
+
+.terminal-panel input:focus-visible {
+  outline: none;
 }
 
 /* Disable right-click context menu globally */
@@ -148,6 +380,7 @@ body {
 
 .terminal-cursor {
   animation: blink 1s step-start infinite;
+  will-change: opacity;
 }
 
 /* ─── Scrollbar styling ────────────────────────────────────────────────────── */
@@ -276,8 +509,7 @@ body {
 .os-desktop {
   position: fixed;
   inset: 0;
-  background: #0a0a0a;
-  background-image: url('/bg.png');
+  background: var(--wallpaper, url('/bg.png'));
   background-size: cover;
   background-position: center;
   overflow: hidden;
@@ -288,7 +520,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--wallpaper-overlay, rgba(0, 0, 0, 0.55));
   pointer-events: none;
 }
 
@@ -405,6 +637,7 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
   animation: windowOpen 0.2s ease-out;
+  will-change: transform;
 }
 
 @keyframes windowOpen {
@@ -646,9 +879,70 @@ body {
   opacity: 1;
 }
 
+.os-taskbar__app--multi {
+  position: relative;
+}
+
+.os-taskbar__app-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.os-taskbar__app-instance {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  font-size: 8px;
+  background: #16213e;
+  color: #00ff9f;
+  border-radius: 3px;
+  padding: 0 3px;
+  line-height: 1.2;
+  font-weight: bold;
+}
+
 .os-taskbar__app:focus-visible {
   outline: 2px solid var(--text-primary);
   outline-offset: 1px;
+}
+
+.os-taskbar__app-wrapper {
+  position: relative;
+}
+
+.os-taskbar__tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  animation: tooltipFadeIn 0.12s ease-out;
+}
+
+.os-taskbar__tooltip-icon {
+  font-size: 14px;
+}
+
+.os-taskbar__tooltip-title {
+  font-size: 12px;
+  color: #e0e0e0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* ─── System Tray ──────────────────────────────────────────────────────────── */
@@ -684,6 +978,77 @@ body {
   color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
   padding: 0 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   TOUCH & MOBILE — Minimum 44px touch targets
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+@media (hover: none) and (pointer: coarse) {
+  .game-btn,
+  .difficulty-btn,
+  .quiz-option,
+  .calc-btn,
+  .music-ctrl-btn,
+  .pomo-ctrl-btn,
+  .qr-opt-btn,
+  .fm-favorite-btn,
+  .notepad-btn,
+  .weather-btn,
+  .weather-preset-btn,
+  .doom-fullscreen-btn,
+  .settings-lang-btn,
+  .settings-font-btn,
+  .settings-theme-card,
+  .cal-nav-btn,
+  .os-taskbar__start {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .game-btn,
+  .difficulty-btn,
+  .quiz-option,
+  .notepad-btn,
+  .weather-btn,
+  .weather-preset-btn,
+  .doom-fullscreen-btn,
+  .settings-lang-btn,
+  .settings-font-btn,
+  .qr-opt-btn,
+  .fm-favorite-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .game-btn,
+  .difficulty-btn,
+  .quiz-option,
+  .calc-btn,
+  .doom-fullscreen-btn {
+    touch-action: manipulation;
+  }
+
+  .desktop-icon {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+  }
+
+  .os-window__btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .os-taskbar__app {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .os-taskbar__notif-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -771,6 +1136,186 @@ body {
   .os-taskbar__system-icons {
     display: none;
   }
+
+  .os-window {
+    min-width: 280px;
+    min-height: 200px;
+  }
+
+  .os-window__body {
+    min-width: 0;
+  }
+
+  .game-container {
+    padding: 8px;
+    min-height: 280px;
+  }
+
+  .game-header {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .game-over-title {
+    font-size: 22px;
+  }
+
+  .game-over-score {
+    font-size: 16px;
+  }
+
+  .quiz-question {
+    font-size: 14px;
+    padding: 12px 0;
+  }
+
+  .quiz-option {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .quiz-option-letter {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .quiz-result-title {
+    font-size: 20px;
+  }
+
+  .quiz-result-score {
+    font-size: 28px;
+  }
+
+  .calc-container {
+    padding: 12px;
+  }
+
+  .calc-display {
+    font-size: 24px;
+    padding: 10px 12px;
+  }
+
+  .calc-btn {
+    font-size: 18px;
+  }
+
+  .chess-board {
+    grid-template-columns: repeat(8, minmax(36px, 1fr));
+    grid-template-rows: repeat(8, minmax(36px, 1fr));
+  }
+
+  .chess-cell {
+    width: auto;
+    height: auto;
+    font-size: clamp(20px, 5vw, 34px);
+  }
+
+  .chess-col-labels {
+    grid-template-columns: repeat(8, minmax(36px, 1fr));
+  }
+
+  .chess-sidebar {
+    min-width: 100px;
+    max-width: 140px;
+  }
+
+  .tetris-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tetris-sidebar {
+    flex-direction: row;
+    min-width: auto;
+    gap: 12px;
+  }
+
+  .tetris-mini-box {
+    min-width: 48px;
+    min-height: 40px;
+  }
+
+  .grid-2048 {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .tile-2048 {
+    width: clamp(50px, 16vw, 64px);
+    height: clamp(50px, 16vw, 64px);
+    font-size: clamp(14px, 3vw, 20px);
+  }
+
+  .solitaire-top-row {
+    gap: 4px;
+  }
+
+  .solitaire-tableau {
+    gap: 4px;
+  }
+
+  .settings-theme-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .settings-font-options {
+    flex-wrap: wrap;
+  }
+
+  .music-controls {
+    gap: 12px;
+  }
+
+  .music-album-art {
+    width: 48px;
+    height: 48px;
+  }
+
+  .cal-time {
+    font-size: 28px;
+  }
+
+  .cal-grid {
+    gap: 2px;
+  }
+
+  .cal-day {
+    padding: 6px 0;
+    font-size: 12px;
+  }
+
+  .fm-container {
+    flex-direction: column;
+  }
+
+  .fm-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .fm-sidebar-title {
+    display: none;
+  }
+
+  .fm-favorite-btn {
+    white-space: nowrap;
+    padding: 6px 10px;
+  }
+
+  .fm-preview {
+    display: none;
+  }
+
+  .minesweeper-game .minesweeper-board {
+    grid-template-columns: repeat(16, clamp(18px, 4.5vw, 28px));
+    grid-template-rows: repeat(16, clamp(18px, 4.5vw, 28px));
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -815,6 +1360,16 @@ body {
   color: rgba(0, 0, 0, 0.6);
 }
 
+[data-theme="light"] .os-taskbar__tooltip {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .os-taskbar__tooltip-title {
+  color: rgba(0, 0, 0, 0.8);
+}
+
 [data-theme="light"] .desktop-icon__label {
   color: #fff;
 }
@@ -852,6 +1407,7 @@ body {
   overflow: hidden;
   animation: startMenuOpen 0.15s ease-out;
   box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  will-change: transform, opacity;
 }
 
 @keyframes startMenuOpen {
@@ -1059,6 +1615,7 @@ body {
   padding: 6px 0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
   animation: contextMenuOpen 0.12s ease-out;
+  will-change: transform, opacity;
 }
 
 @keyframes contextMenuOpen {
@@ -1452,6 +2009,7 @@ body {
   overflow: hidden;
   position: relative;
   box-sizing: border-box;
+  contain: content;
 }
 
 .game-container.solitaire-container {
@@ -1649,7 +2207,7 @@ body {
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   padding: 8px;
-  background: rgba(187, 173, 160, 0.3);
+  background: var(--tile-grid-bg);
   border-radius: 8px;
   width: fit-content;
 }
@@ -1679,7 +2237,7 @@ body {
 }
 
 .tile-empty {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--tile-empty-bg);
   color: transparent;
 }
 
@@ -2389,6 +2947,51 @@ body {
   background: #16213e;
 }
 
+.settings-wallpaper-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.settings-wallpaper-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  background: #0f0f23;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.settings-wallpaper-card:hover { border-color: #333; }
+
+.settings-wallpaper-card--active {
+  border-color: #00ff9f;
+  background: #16213e;
+}
+
+.settings-wallpaper-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 4px;
+  border: 1px solid #222;
+  background-size: cover;
+  background-position: center;
+}
+
+.settings-wallpaper-name {
+  font-size: 11px;
+  color: #888;
+}
+
+.settings-wallpaper-card--active .settings-wallpaper-name {
+  color: #00ff9f;
+}
+
 .settings-about {
   background: #0f0f23;
   border-radius: 8px;
@@ -2691,6 +3294,7 @@ body {
   height: 100%;
   border-radius: 4px;
   transition: width 0.5s ease;
+  will-change: width;
 }
 
 .sysmon-info {
@@ -2704,6 +3308,7 @@ body {
 .sysmon-table-wrapper {
   flex: 1;
   overflow: auto;
+  max-height: 320px;
   background: #0f0f23;
   border-radius: 6px;
 }
@@ -2977,9 +3582,9 @@ body {
   grid-template-columns: repeat(16, 28px);
   grid-template-rows: repeat(16, 28px);
   gap: 0;
-  border: 3px solid #555;
+  border: 3px solid var(--ms-board-border);
   border-radius: 4px;
-  background: #bdb6b0;
+  background: var(--ms-board-bg);
   padding: 0;
 }
 
@@ -3004,31 +3609,31 @@ body {
 }
 
 .ms-hidden {
-  background: linear-gradient(145deg, #d4cfc7, #a8a29e);
+  background: linear-gradient(145deg, var(--ms-hidden-start), var(--ms-hidden-end));
   box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.15);
 }
 
 .ms-hidden:hover {
-  background: linear-gradient(145deg, #ddd8d0, #b8b2ae);
+  background: linear-gradient(145deg, var(--ms-hidden-hover-start), var(--ms-hidden-hover-end));
 }
 
 .ms-hidden:active {
   box-shadow: none;
-  background: #b8b2ae;
+  background: var(--ms-revealed-bg);
 }
 
 .ms-revealed {
-  background: #c8c2ba;
+  background: var(--ms-revealed-bg);
   border-color: rgba(0,0,0,0.08);
   box-shadow: none;
 }
 
 .ms-mine {
-  background: #e57373 !important;
+  background: var(--ms-mine-bg) !important;
 }
 
 .ms-flagged {
-  background: linear-gradient(145deg, #d4cfc7, #a8a29e);
+  background: linear-gradient(145deg, var(--ms-hidden-start), var(--ms-hidden-end));
   box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.15);
 }
 
@@ -3054,7 +3659,7 @@ body {
   display: grid;
   grid-template-columns: repeat(8, 52px);
   grid-template-rows: repeat(8, 52px);
-  border: 3px solid #555;
+  border: 3px solid var(--game-board-border);
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -3074,11 +3679,11 @@ body {
 }
 
 .chess-cell-light {
-  background: #EEEED2;
+  background: var(--chess-light);
 }
 
 .chess-cell-dark {
-  background: #769656;
+  background: var(--chess-dark);
 }
 
 .chess-piece {
@@ -3091,19 +3696,19 @@ body {
 }
 
 .chess-cell-selected {
-  background: #8297d3 !important;
+  background: var(--chess-selected) !important;
 }
 
 .chess-cell-highlight {
-  background: #6b8e5a !important;
+  background: var(--chess-highlight) !important;
 }
 
 .chess-cell-last-move {
-  background: #cdd16a !important;
+  background: var(--chess-last-move) !important;
 }
 
 .chess-cell-check {
-  background: #e57373 !important;
+  background: var(--chess-check) !important;
 }
 
 .chess-move-dot {
@@ -3132,7 +3737,7 @@ body {
 
 .chess-col-label {
   font-size: 10px;
-  color: #888;
+  color: var(--text-secondary);
   padding: 2px 0;
 }
 
@@ -3145,7 +3750,7 @@ body {
 }
 
 .chess-captured {
-  background: #16213e;
+  background: var(--game-panel-bg);
   border-radius: 6px;
   padding: 8px;
   min-height: 40px;
@@ -3153,7 +3758,7 @@ body {
 
 .chess-captured-label {
   font-size: 10px;
-  color: #888;
+  color: var(--text-secondary);
   margin-bottom: 4px;
   text-transform: uppercase;
 }
@@ -3165,7 +3770,7 @@ body {
 }
 
 .chess-moves-panel {
-  background: #16213e;
+  background: var(--game-panel-bg);
   border-radius: 6px;
   padding: 8px;
   max-height: 260px;
@@ -3177,7 +3782,7 @@ body {
 .chess-moves-title {
   font-weight: 700;
   margin-bottom: 4px;
-  color: #00ff9f;
+  color: var(--text-primary);
   font-size: 11px;
   text-transform: uppercase;
 }
@@ -3189,7 +3794,7 @@ body {
 }
 
 .chess-move-num {
-  color: #555;
+  color: var(--text-secondary);
   min-width: 24px;
 }
 
@@ -3202,8 +3807,8 @@ body {
 }
 
 .chess-promotion-dialog {
-  background: #1a1a2e;
-  border: 2px solid #00ff9f;
+  background: var(--game-panel-bg);
+  border: 2px solid var(--text-primary);
   border-radius: 10px;
   padding: 16px 20px;
   text-align: center;
@@ -3211,7 +3816,7 @@ body {
 }
 
 .chess-promotion-title {
-  color: #fff;
+  color: var(--text-input);
   font-size: 14px;
   margin-bottom: 12px;
   font-weight: 600;
@@ -3227,34 +3832,22 @@ body {
   width: 52px;
   height: 52px;
   font-size: 32px;
-  background: #16213e;
-  border: 2px solid #333;
+  background: var(--game-panel-bg);
+  border: 2px solid var(--game-board-border);
   border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
-  color: #fff;
+  color: var(--text-input);
 }
 
 .chess-promotion-btn:hover {
-  border-color: #00ff9f;
-  background: #1a2a4a;
+  border-color: var(--text-primary);
+  background: var(--chess-dark);
   transform: scale(1.1);
 }
-
-/* ─── Light theme overrides for new games ────────────────────────────────── */
-[data-theme="light"] .ms-cell { border-color: rgba(0,0,0,0.1); }
-[data-theme="light"] .ms-hidden {
-  background: linear-gradient(145deg, #e8e4de, #c8c2bc);
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.7), inset -1px -1px 0 rgba(0,0,0,0.1);
-}
-[data-theme="light"] .ms-revealed { background: #d8d2ca; }
-[data-theme="light"] .ms-mine { background: #ef9a9a !important; }
-[data-theme="light"] .chess-board { border-color: #999; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-[data-theme="light"] .chess-cell-light { background: #EEEED2; }
-[data-theme="light"] .chess-cell-dark { background: #769656; }
 
 /* ─── Solitaire ────────────────────────────────────────────────────────── */
 .solitaire-container {
@@ -3328,7 +3921,7 @@ body {
 .solitaire-empty-pile {
   width: 100%;
   height: 100%;
-  border: 2px dashed rgba(255,255,255,0.15);
+  border: 2px dashed var(--text-secondary);
   border-radius: 6px;
 }
 
@@ -3352,8 +3945,8 @@ body {
 }
 
 .solitaire-card--back {
-  background: linear-gradient(135deg, #16213e 0%, #0f0f23 100%);
-  border: 1px solid rgba(0,255,159,0.3);
+  background: linear-gradient(135deg, var(--game-panel-bg) 0%, rgba(0,0,0,0.3) 100%);
+  border: 1px solid var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3362,15 +3955,16 @@ body {
 .solitaire-card-back-pattern {
   width: 50px;
   height: 70px;
-  border: 1px solid rgba(0,255,159,0.2);
+  border: 1px solid var(--text-primary);
   border-radius: 3px;
   background: repeating-linear-gradient(
     45deg,
     transparent,
     transparent 3px,
-    rgba(0,255,159,0.05) 3px,
-    rgba(0,255,159,0.05) 6px
+    var(--text-primary) 3px,
+    var(--text-primary) 6px
   );
+  opacity: 0.15;
 }
 
 .solitaire-card--front {
@@ -3422,7 +4016,7 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 10px;
-  color: #888;
+  color: var(--text-secondary);
   z-index: 2;
 }
 

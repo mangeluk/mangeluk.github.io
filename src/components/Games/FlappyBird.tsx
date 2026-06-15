@@ -30,6 +30,15 @@ interface GameState {
   score: number;
   gameOver: boolean;
   started: boolean;
+  paused: boolean;
+}
+
+function loadHighScore(): number {
+  try { return parseInt(localStorage.getItem('flappy-highscore') || '0', 10); } catch { return 0; }
+}
+
+function saveHighScore(score: number) {
+  try { localStorage.setItem('flappy-highscore', String(score)); } catch {}
 }
 
 function initGameState(): GameState {
@@ -39,11 +48,12 @@ function initGameState(): GameState {
     score: 0,
     gameOver: false,
     started: false,
+    paused: false,
   };
 }
 
 function tick(state: GameState): GameState {
-  if (state.gameOver || !state.started) return state;
+  if (state.gameOver || !state.started || state.paused) return state;
 
   let velocity = state.bird.velocity + GRAVITY;
   let y = state.bird.y + velocity;
@@ -84,15 +94,22 @@ function tick(state: GameState): GameState {
     }
   }
 
-  return { bird: { y, velocity }, pipes, score, gameOver: false, started: true };
+  return { bird: { y, velocity }, pipes, score, gameOver: false, started: true, paused: false };
 }
 
 export default function FlappyBird() {
   const [gs, setGs] = useState<GameState>(initGameState);
+  const [highScore, setHighScore] = useState(loadHighScore);
   const gsRef = useRef(gs);
   const animRef = useRef<number | null>(null);
   const pipeTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useEffect(() => { gsRef.current = gs; });
 
@@ -116,14 +133,14 @@ export default function FlappyBird() {
   }, [resetGame]);
 
   useEffect(() => {
-    if (!gs.started || gs.gameOver) {
+    if (!gs.started || gs.gameOver || gs.paused) {
       if (animRef.current) cancelAnimationFrame(animRef.current);
       return;
     }
     const loop = () => {
       setGs((prev) => {
         const next = tick(prev);
-        if (!next.gameOver && next.started) {
+        if (!next.gameOver && next.started && mountedRef.current) {
           animRef.current = requestAnimationFrame(loop);
         }
         return next;
@@ -133,16 +150,16 @@ export default function FlappyBird() {
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [gs.started, gs.gameOver]);
+  }, [gs.started, gs.gameOver, gs.paused]);
 
   useEffect(() => {
-    if (!gs.started || gs.gameOver) {
+    if (!gs.started || gs.gameOver || gs.paused) {
       if (pipeTimerRef.current) clearInterval(pipeTimerRef.current);
       return;
     }
     pipeTimerRef.current = setInterval(() => {
       setGs((prev) => {
-        if (prev.gameOver || !prev.started) return prev;
+        if (prev.gameOver || !prev.started || !mountedRef.current) return prev;
         const gapY = Math.random() * (CANVAS_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 80) + 40;
         return {
           ...prev,
@@ -153,11 +170,26 @@ export default function FlappyBird() {
     return () => {
       if (pipeTimerRef.current) clearInterval(pipeTimerRef.current);
     };
-  }, [gs.started, gs.gameOver]);
+  }, [gs.started, gs.gameOver, gs.paused]);
+
+  useEffect(() => {
+    if (gs.gameOver && gs.score > highScore) {
+      setHighScore(gs.score);
+      saveHighScore(gs.score);
+    }
+  }, [gs.gameOver, gs.score, highScore]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (gsRef.current.started && !gsRef.current.gameOver) {
+        setGs((prev) => ({ ...prev, paused: !prev.paused }));
+      }
+      return;
+    }
     if (e.key === ' ' || e.key === 'ArrowUp') {
       e.preventDefault();
+      if (gsRef.current.paused) return;
       flap();
     }
   }, [flap]);
@@ -335,7 +367,7 @@ export default function FlappyBird() {
   return (
     <div className="game-container">
       <div className="game-header">
-        <span className="game-score">Score: {gs.score}</span>
+        <span className="game-score">Score: {gs.score} | High: {highScore}</span>
         <button className="game-btn" onClick={resetGame}>New Game</button>
       </div>
 
@@ -352,14 +384,24 @@ export default function FlappyBird() {
           <div className="game-overlay-text">
             <div className="game-over-title">GAME OVER</div>
             <div className="game-over-score">Score: {gs.score}</div>
+            {gs.score >= highScore && gs.score > 0 && <div className="game-over-hint" style={{ color: '#ffb86c' }}>NEW HIGH SCORE!</div>}
             <div className="game-over-hint">Press SPACE to restart</div>
+          </div>
+        </div>
+      )}
+
+      {gs.paused && !gs.gameOver && (
+        <div className="game-overlay">
+          <div className="game-overlay-text">
+            <div className="game-over-title">PAUSED</div>
+            <div className="game-over-hint">Press ESC to resume</div>
           </div>
         </div>
       )}
 
       <div className="game-footer">
         <span>SPACE / Click to flap</span>
-        <span>Don&apos;t hit the pipes!</span>
+        <span>ESC to pause</span>
       </div>
     </div>
   );

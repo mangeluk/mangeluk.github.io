@@ -14,6 +14,8 @@ import Taskbar from './Taskbar';
 import ContentWindow from './ContentWindow';
 import StartMenu from './StartMenu';
 import ContextMenu from './ContextMenu';
+import ErrorBoundary from '../ErrorBoundary';
+import WelcomeWindow from './WelcomeWindow';
 const SnakeGame = React.lazy(() => import('../Games/SnakeGame'));
 const TetrisGame = React.lazy(() => import('../Games/TetrisGame'));
 const Game2048 = React.lazy(() => import('../Games/Game2048'));
@@ -52,6 +54,8 @@ interface DesktopWindow {
   gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess' | 'solitaire';
   /** If set, window renders a utility app */
   utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer' | 'pomodoro' | 'qrcode';
+  /** If set, window renders the welcome screen */
+  welcomeType?: 'welcome';
 }
 
 const DESKTOP_ICONS = [
@@ -140,6 +144,7 @@ export default function Desktop() {
 
   const [theme, setThemeState] = useState<Theme>(getInitialTheme);
   const [lang, setLangState] = useState<Lang>(getInitialLang);
+  const [mounted, setMounted] = useState(false);
   const [windows, setWindows] = useState<DesktopWindow[]>([
     {
       id: 'terminal',
@@ -152,14 +157,48 @@ export default function Desktop() {
   ]);
   const [activeWindowId, setActiveWindowId] = useState<string>('terminal');
   const [zCounter, setZCounter] = useState(100);
+
+  // Check localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    const visited = localStorage.getItem('portfolio-visited');
+    if (!visited) {
+      setWindows([
+        {
+          id: 'welcome',
+          title: 'Welcome',
+          icon: '👋',
+          isOpen: true,
+          isMinimized: false,
+          isMaximized: false,
+          welcomeType: 'welcome',
+        },
+      ]);
+      setActiveWindowId('welcome');
+    }
+  }, []);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [iconContextMenu, setIconContextMenu] = useState<{ x: number; y: number; iconId: string } | null>(null);
   const [altTabActive, setAltTabActive] = useState(false);
   const [altTabIndex, setAltTabIndex] = useState(0);
   const altHeld = useRef(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const instanceCounters = useRef({ terminal: 0, notepad: 0 });
+  const [wallpaper, setWallpaperState] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'default';
+    return localStorage.getItem('desktop-wallpaper') || 'default';
+  });
 
-  // Apply saved font size on mount
+  const WALLPAPER_MAP: Record<string, string> = {
+    default: "url('/bg.png')",
+    solid: '#0a0a0a',
+    gradient: 'linear-gradient(135deg, #0a0a0a 0%, #111111 100%)',
+    none: '#000000',
+  };
+
+  // Apply saved font size and wallpaper on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem('terminal-font-size');
@@ -168,7 +207,70 @@ export default function Desktop() {
         document.documentElement.style.setProperty('--term-font-size', sizes[saved]);
       }
     } catch {}
+    // Apply wallpaper inline to avoid forward reference
+    const wpValue = WALLPAPER_MAP[wallpaper] || WALLPAPER_MAP.default;
+    document.documentElement.style.setProperty('--wallpaper', wpValue);
+    document.documentElement.style.setProperty(
+      '--wallpaper-overlay',
+      wallpaper === 'solid' || wallpaper === 'none' ? 'transparent' : 'rgba(0, 0, 0, 0.55)'
+    );
   }, []);
+
+  // Swipe gesture support for start menu on mobile
+  useEffect(() => {
+    const SWIPE_THRESHOLD = 50;
+    const EDGE_THRESHOLD = 30;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return;
+
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const deltaX = touchEndX - touchStartX.current;
+      const deltaY = touchEndY - touchStartY.current;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > SWIPE_THRESHOLD) {
+        if (deltaX > 0 && touchStartX.current < EDGE_THRESHOLD) {
+          setStartMenuOpen(true);
+        } else if (deltaX < 0 && startMenuOpen) {
+          setStartMenuOpen(false);
+        }
+      }
+
+      touchStartX.current = null;
+      touchStartY.current = null;
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [startMenuOpen]);
+
+  const applyWallpaper = useCallback((wp: string) => {
+    const value = WALLPAPER_MAP[wp] || WALLPAPER_MAP.default;
+    document.documentElement.style.setProperty('--wallpaper', value);
+    document.documentElement.style.setProperty(
+      '--wallpaper-overlay',
+      wp === 'solid' || wp === 'none' ? 'transparent' : 'rgba(0, 0, 0, 0.55)'
+    );
+  }, []);
+
+  const handleWallpaperChange = useCallback((wp: string) => {
+    setWallpaperState(wp);
+    try {
+      localStorage.setItem('desktop-wallpaper', wp);
+    } catch {}
+    applyWallpaper(wp);
+  }, [applyWallpaper]);
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);
@@ -244,6 +346,37 @@ export default function Desktop() {
     gameType?: 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess' | 'solitaire',
     utilityType?: 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer' | 'pomodoro' | 'qrcode',
   ) => {
+    // Multi-instance support: terminal and notepad always create new windows
+    const isMultiInstance = id === 'terminal' || (utilityType === 'notepad' && id === 'notepad');
+
+    if (isMultiInstance) {
+      const key = id === 'terminal' ? 'terminal' : 'notepad';
+      instanceCounters.current[key] += 1;
+      const instanceNum = instanceCounters.current[key];
+      const instanceId = `${key}-${instanceNum}`;
+
+      const icon = id === 'terminal' ? '⬛' : UTILITY_ICON_MAP.notepad.icon;
+      const title = id === 'terminal'
+        ? `Terminal ${instanceNum}`
+        : `Notepad ${instanceNum}`;
+
+      setWindows((prev) => [
+        ...prev,
+        {
+          id: instanceId,
+          title,
+          icon,
+          isOpen: true,
+          isMinimized: false,
+          isMaximized: false,
+          utilityType: id === 'terminal' ? undefined : 'notepad',
+        },
+      ]);
+      focusWindow(instanceId);
+      return;
+    }
+
+    // Single-instance behavior for everything else
     setWindows((prev) => {
       const existing = prev.find((w) => w.id === id);
       if (existing) {
@@ -422,7 +555,11 @@ export default function Desktop() {
       case 'solitaire': content = <SolitaireGame />; break;
       default: content = <div>Game not found</div>;
     }
-    return <React.Suspense fallback={<div style={{ padding: 16, color: '#00ff9f' }}>Loading...</div>}>{content}</React.Suspense>;
+    return (
+      <React.Suspense fallback={<div style={{ padding: 16, color: '#00ff9f' }}>Loading...</div>}>
+        <ErrorBoundary fallbackLabel={gameType}>{content}</ErrorBoundary>
+      </React.Suspense>
+    );
   }, [lang]);
 
   const renderUtilityContent = useCallback((utilityType: string) => {
@@ -431,7 +568,7 @@ export default function Desktop() {
       case 'calculator': content = <CalculatorApp />; break;
       case 'notepad': content = <NotepadApp />; break;
       case 'weather': content = <WeatherApp />; break;
-      case 'settings': content = <SettingsApp theme={theme} lang={lang} setTheme={(t) => setTheme(t as Theme)} setLang={(l) => setLang(l as Lang)} />; break;
+      case 'settings': content = <SettingsApp theme={theme} lang={lang} setTheme={(t) => setTheme(t as Theme)} setLang={(l) => setLang(l as Lang)} onWallpaperChange={handleWallpaperChange} />; break;
       case 'filemanager': content = <FileManagerApp />; break;
       case 'calendar': content = <CalendarApp />; break;
       case 'sysmonitor': content = <SystemMonitorApp />; break;
@@ -441,10 +578,10 @@ export default function Desktop() {
       default: content = <div>App not found</div>;
     }
     return <React.Suspense fallback={<div style={{ padding: 16, color: '#00ff9f' }}>Loading...</div>}>{content}</React.Suspense>;
-  }, [theme, lang, setTheme, setLang]);
+  }, [theme, lang, setTheme, setLang, handleWallpaperChange]);
 
   return (
-    <div className="os-desktop" onClick={handleDesktopClick} onContextMenu={handleDesktopContextMenu}>
+    <div className="os-desktop" onClick={handleDesktopClick} onContextMenu={handleDesktopContextMenu} role="main" id="desktop-main" style={{ '--wallpaper': WALLPAPER_MAP[wallpaper] || WALLPAPER_MAP.default } as React.CSSProperties}>
       {/* Desktop icons */}
       <div className="os-desktop__icons os-desktop__icons--portfolio">
         {DESKTOP_ICONS.map((iconDef) => (
@@ -486,7 +623,7 @@ export default function Desktop() {
       {/* Windows */}
       {windows.map((win, index) => {
         const isActive = activeWindowId === win.id;
-        const winZ = isActive ? zCounter + 1 : 100 + index;
+        const winZ = isActive ? zCounter + 1 : 100;
 
         return (
           <Window
@@ -505,7 +642,21 @@ export default function Desktop() {
             initialX={win.id === 'terminal' ? 100 : 160 + index * 30}
             initialY={win.id === 'terminal' ? 30 : 50 + index * 30}
           >
-            {win.gameType ? (
+            {win.welcomeType === 'welcome' ? (
+              <WelcomeWindow
+                lang={lang}
+                onClose={() => {
+                  localStorage.setItem('portfolio-visited', 'true');
+                  closeWindow(win.id);
+                  // Optionally open terminal after closing welcome
+                  setTimeout(() => openWindow('terminal'), 100);
+                }}
+                onOpenContact={() => {
+                  openWindow('contact', 'contact');
+                  closeWindow(win.id);
+                }}
+              />
+            ) : win.gameType ? (
               renderGameContent(win.gameType)
             ) : win.utilityType ? (
               renderUtilityContent(win.utilityType)
@@ -545,6 +696,7 @@ export default function Desktop() {
         onToggleLang={handleToggleLang}
         onStartClick={() => setStartMenuOpen((o) => !o)}
         isStartMenuOpen={startMenuOpen}
+        role="banner"
       />
 
       {/* Context Menu */}

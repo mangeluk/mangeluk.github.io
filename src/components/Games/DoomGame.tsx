@@ -2,9 +2,33 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 
+function DoomHelp({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="game-overlay" onClick={onClose}>
+      <div className="game-overlay-text" style={{ maxWidth: 400, textAlign: 'left' }} onClick={(e) => e.stopPropagation()}>
+        <div className="game-over-title" style={{ textAlign: 'center' }}>DOOM Controls</div>
+        <div style={{ fontSize: 12, lineHeight: 1.6, color: '#ccc' }}>
+          <p><b style={{ color: '#00ff9f' }}>Movement:</b></p>
+          <p>W = Forward &nbsp; S = Backward &nbsp; A = Strafe left &nbsp; D = Strafe right</p>
+          <p><b style={{ color: '#00ff9f' }}>Actions:</b></p>
+          <p>Mouse = Look around &nbsp; Ctrl = Shoot &nbsp; Space = Open doors/switches</p>
+          <p><b style={{ color: '#00ff9f' }}>Keys:</b></p>
+          <p>1-7 = Select weapon &nbsp; Shift = Run &nbsp; F = Toggle fullscreen</p>
+          <p><b style={{ color: '#00ff9f' }}>General:</b></p>
+          <p>Click inside the game to capture mouse. Press Esc to release.</p>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button className="game-btn" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DoomGame() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleLoad = useCallback(() => {
@@ -40,6 +64,8 @@ export default function DoomGame() {
 
   return (
     <div className="game-container game-doom" onClick={handleClick}>
+      {showHelp && <DoomHelp onClose={() => setShowHelp(false)} />}
+
       {!loaded && !error && (
         <div className="doom-loading">
           <div className="doom-loading-text">Loading DOOM...</div>
@@ -76,8 +102,9 @@ export default function DoomGame() {
       {loaded && (
         <div className="doom-controls-bar">
           <span className="doom-controls-text">
-            Click inside the game to play | WASD: Move | Mouse: Look | Ctrl: Shoot | Space: Open doors
+            Click inside to play | WASD: Move | Mouse: Look | Ctrl: Shoot | Space: Open doors
           </span>
+          <button className="doom-fullscreen-btn" onClick={(e) => { e.stopPropagation(); setShowHelp(true); }} title="Help">?</button>
           <button className="doom-fullscreen-btn" onClick={requestFullscreen}>
             Fullscreen (F)
           </button>

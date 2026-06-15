@@ -70,7 +70,7 @@ export default function SystemMonitorApp() {
     };
   }, [refresh]);
 
-  const sorted = [...processes].sort((a, b) => b.cpu - a.cpu);
+  const sorted = [...processes].sort((a, b) => b.cpu - a.cpu).slice(0, 15);
 
   return (
     <div className="sysmon-container">

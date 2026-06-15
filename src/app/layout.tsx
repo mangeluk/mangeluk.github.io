@@ -36,6 +36,9 @@ export default function RootLayout({
           backgroundColor: '#0a0a0a',
         }}
       >
+        <a href="#desktop-main" className="skip-link">
+          Skip to main content
+        </a>
         {children}
       </body>
     </html>

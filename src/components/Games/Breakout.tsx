@@ -42,6 +42,7 @@ interface GameState {
   gameOver: boolean;
   gameWon: boolean;
   started: boolean;
+  paused: boolean;
 }
 
 function createBricks(): Brick[] {
@@ -79,11 +80,12 @@ function initGameState(): GameState {
     gameOver: false,
     gameWon: false,
     started: false,
+    paused: false,
   };
 }
 
 function tick(state: GameState, paddleX: number): GameState {
-  if (state.gameOver || state.gameWon || !state.started) return state;
+  if (state.gameOver || state.gameWon || !state.started || state.paused) return state;
 
   let { x, y, dx, dy } = state.ball;
   x += dx;
@@ -177,16 +179,32 @@ function tick(state: GameState, paddleX: number): GameState {
     gameOver: false,
     gameWon,
     started: state.started,
+    paused: false,
   };
+}
+
+function loadHighScore(): number {
+  try { return parseInt(localStorage.getItem('breakout-highscore') || '0', 10); } catch { return 0; }
+}
+
+function saveHighScore(score: number) {
+  try { localStorage.setItem('breakout-highscore', String(score)); } catch {}
 }
 
 export default function Breakout() {
   const [gs, setGs] = useState<GameState>(initGameState);
+  const [highScore, setHighScore] = useState(loadHighScore);
   const gsRef = useRef(gs);
   const paddleXRef = useRef((CANVAS_WIDTH - PADDLE_WIDTH) / 2);
   const keysRef = useRef(new Set<string>());
   const animRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useEffect(() => { gsRef.current = gs; });
 
@@ -226,6 +244,13 @@ export default function Breakout() {
   }, [startGame]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (gsRef.current.started && !gsRef.current.gameOver && !gsRef.current.gameWon) {
+        setGs((prev) => ({ ...prev, paused: !prev.paused }));
+      }
+      return;
+    }
     if (gsRef.current.gameOver || gsRef.current.gameWon) {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -238,6 +263,13 @@ export default function Breakout() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    if ((gs.gameOver || gs.gameWon) && gs.score > highScore) {
+      setHighScore(gs.score);
+      saveHighScore(gs.score);
+    }
+  }, [gs.gameOver, gs.gameWon, gs.score, highScore]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -266,17 +298,17 @@ export default function Breakout() {
         paddleXRef.current = Math.min(CANVAS_WIDTH - PADDLE_WIDTH, paddleXRef.current + PADDLE_SPEED);
       }
       setGs((prev) => tick(prev, paddleXRef.current));
-      if (gsRef.current.started && !gsRef.current.gameOver && !gsRef.current.gameWon) {
+      if (gsRef.current.started && !gsRef.current.gameOver && !gsRef.current.gameWon && !gsRef.current.paused && mountedRef.current) {
         animRef.current = requestAnimationFrame(loop);
       }
     };
-    if (gsRef.current.started && !gsRef.current.gameOver && !gsRef.current.gameWon) {
+    if (gsRef.current.started && !gsRef.current.gameOver && !gsRef.current.gameWon && !gsRef.current.paused && mountedRef.current) {
       animRef.current = requestAnimationFrame(loop);
     }
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [gs.started, gs.gameOver, gs.gameWon]);
+  }, [gs.started, gs.gameOver, gs.gameWon, gs.paused]);
 
   // Draw
   useEffect(() => {
@@ -313,12 +345,22 @@ export default function Breakout() {
       ctx.textAlign = 'center';
       ctx.fillText('Click to Start', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
     }
+    if (gs.paused && !gs.gameOver && !gs.gameWon) {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 24px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('PAUSED', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 10);
+      ctx.font = '14px monospace';
+      ctx.fillText('Press ESC to resume', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 15);
+    }
   }, [gs]);
 
   return (
     <div className="game-container">
       <div className="game-header">
-        <span className="game-score">Score: {gs.score}</span>
+        <span className="game-score">Score: {gs.score} | High: {highScore}</span>
         <span className="game-controls">Lives: {gs.lives}</span>
         <button className="game-btn" onClick={resetGame}>New Game</button>
       </div>
@@ -346,7 +388,7 @@ export default function Breakout() {
 
       <div className="game-footer">
         <span>Mouse / Arrow keys to move paddle</span>
-        <span>Break all bricks to win</span>
+        <span>ESC to pause</span>
       </div>
     </div>
   );

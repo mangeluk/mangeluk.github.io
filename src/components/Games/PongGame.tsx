@@ -13,9 +13,18 @@ const BALL_SPEED_MAX = BALL_SPEED_INITIAL * 2;
 const AI_SPEED_MAP = { easy: 2, medium: 4, hard: 6 } as const;
 type Difficulty = keyof typeof AI_SPEED_MAP;
 
+function loadHighScore(): number {
+  try { return parseInt(localStorage.getItem('pong-highscore') || '0', 10); } catch { return 0; }
+}
+
+function saveHighScore(score: number) {
+  try { localStorage.setItem('pong-highscore', String(score)); } catch {}
+}
+
 export default function PongGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState({ player: 0, ai: 0 });
+  const [highScore, setHighScore] = useState(loadHighScore);
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'paused' | 'gameover'>('idle');
   const [winner, setWinner] = useState<'player' | 'ai' | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -32,6 +41,12 @@ export default function PongGame() {
 
   const keysRef = useRef<Set<string>>(new Set());
   const animRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const gameLoopRef = useRef<(() => void) | null>(null);
 
@@ -169,7 +184,9 @@ export default function PongGame() {
     ctx.fillStyle = '#ff5555';
     ctx.fillText(String(gs.score.ai), (CANVAS_WIDTH * 3) / 4, 40);
 
-    animRef.current = requestAnimationFrame(gameLoopRef.current!);
+    if (mountedRef.current) {
+      animRef.current = requestAnimationFrame(gameLoopRef.current!);
+    }
   }, [resetBall, difficulty]);
 
   useEffect(() => {
@@ -184,6 +201,13 @@ export default function PongGame() {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
   }, [gameState, gameLoop]);
+
+  useEffect(() => {
+    if (gameState === 'gameover' && winner === 'player' && score.player > highScore) {
+      setHighScore(score.player);
+      saveHighScore(score.player);
+    }
+  }, [gameState, winner, score.player, highScore]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     keysRef.current.add(e.key);
@@ -217,7 +241,7 @@ export default function PongGame() {
   return (
     <div className="game-container game-pong">
       <div className="game-header">
-        <span className="game-score" style={{ color: '#00ff9f' }}>You: {score.player}</span>
+        <span className="game-score" style={{ color: '#00ff9f' }}>You: {score.player} | High: {highScore}</span>
         <span className="game-controls">First to 5 wins</span>
         <span className="game-score" style={{ color: '#ff5555' }}>AI: {score.ai}</span>
       </div>

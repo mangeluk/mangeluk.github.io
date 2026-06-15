@@ -215,6 +215,26 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
     // No more matches — keep current state
   }
 
+  // Argument completions for known commands
+  const commandArgs: Record<string, string[]> = {
+    theme: ['dark', 'light', 'matrix', 'dracula', 'nord', 'monokai', 'current'],
+    lang: ['es', 'en', 'current'],
+    cv: ['--skills', '-s', '--experience', '-e', '--projects', '-p'],
+    todo: ['add', 'list', 'done'],
+  };
+
+  function findCommonPrefix(strings: string[]): string {
+    if (strings.length === 0) return '';
+    let prefix = strings[0];
+    for (let i = 1; i < strings.length; i++) {
+      while (!strings[i].startsWith(prefix)) {
+        prefix = prefix.slice(0, -1);
+      }
+      if (prefix === '') break;
+    }
+    return prefix;
+  }
+
   function handleAutocomplete() {
     const commands = getAvailableCommands();
     const trimmedValue = value.trim();
@@ -228,7 +248,6 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
       return;
     }
 
-    // Split input into parts to detect if we're completing a path
     const parts = trimmedValue.split(' ');
     const isFirstWord = parts.length <= 1;
 
@@ -242,18 +261,38 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
         onChange(matches[0] + ' ');
         setSuggestions([]);
       } else {
-        let prefix = matches[0];
-        for (let i = 1; i < matches.length; i++) {
-          while (!matches[i].startsWith(prefix)) {
-            prefix = prefix.slice(0, -1);
-          }
-          if (prefix === '') break;
-        }
+        const prefix = findCommonPrefix(matches);
         if (prefix.length > cmdLower.length) {
           onChange(prefix);
+        } else {
+          setSuggestions(matches);
         }
       }
     } else {
+      const cmd = parts[0].toLowerCase();
+
+      // Argument completion for known commands (theme, lang, cv, todo)
+      if (commandArgs[cmd]) {
+        const argPrefix = parts[parts.length - 1].toLowerCase();
+        const matches = commandArgs[cmd].filter(a => a.startsWith(argPrefix));
+        if (matches.length === 0) return;
+
+        if (matches.length === 1) {
+          const newParts = [...parts.slice(0, -1), matches[0]];
+          onChange(newParts.join(' '));
+          setSuggestions([]);
+        } else {
+          const prefix = findCommonPrefix(matches);
+          if (prefix.length > argPrefix.length) {
+            const newParts = [...parts.slice(0, -1), prefix];
+            onChange(newParts.join(' '));
+          } else {
+            setSuggestions(matches);
+          }
+        }
+        return;
+      }
+
       // Path completion
       const pathPart = parts[parts.length - 1];
       const dirSeparator = pathPart.lastIndexOf('/');
@@ -284,14 +323,7 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
         onChange(newParts.join(' '));
         setSuggestions([]);
       } else {
-        // Find common prefix
-        let commonPrefix = matches[0];
-        for (let i = 1; i < matches.length; i++) {
-          while (!matches[i].startsWith(commonPrefix)) {
-            commonPrefix = commonPrefix.slice(0, -1);
-          }
-          if (commonPrefix === '') break;
-        }
+        const commonPrefix = findCommonPrefix(matches);
         if (commonPrefix.length > prefix.length) {
           const newParts = [...parts.slice(0, -1)];
           if (dirSeparator >= 0) {
@@ -300,6 +332,8 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
             newParts.push(commonPrefix);
           }
           onChange(newParts.join(' '));
+        } else {
+          setSuggestions(matches);
         }
       }
     }

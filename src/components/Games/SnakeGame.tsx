@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { playBeep, playGameOver } from '@/lib/sound';
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 20;
@@ -25,6 +26,12 @@ export default function SnakeGame() {
   }, []);
   const directionRef = useRef<Direction>('RIGHT');
   const gameLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const generateFood = useCallback((currentSnake: Point[]): Point => {
     let newFood: Point;
@@ -69,6 +76,7 @@ export default function SnakeGame() {
 
       // Check self collision
       if (prev.some((seg) => seg.x === head.x && seg.y === head.y)) {
+        playGameOver();
         setGameOver(true);
         return prev;
       }
@@ -77,6 +85,7 @@ export default function SnakeGame() {
 
       // Check food
       if (head.x === food.x && head.y === food.y) {
+        playBeep(600, 0.08);
         setScore((s) => {
           const newScore = s + 10;
           setHighScore((prev) => {
@@ -97,7 +106,9 @@ export default function SnakeGame() {
   }, [gameOver, isPaused, food, generateFood]);
 
   useEffect(() => {
-    gameLoopRef.current = setInterval(moveSnake, speed);
+    gameLoopRef.current = setInterval(() => {
+      if (mountedRef.current) moveSnake();
+    }, speed);
     return () => {
       if (gameLoopRef.current) clearInterval(gameLoopRef.current);
     };

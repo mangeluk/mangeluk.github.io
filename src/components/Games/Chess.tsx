@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { playClick } from '@/lib/sound';
 
 type PieceType = 'K' | 'Q' | 'R' | 'B' | 'N' | 'P';
 type Color = 'w' | 'b';
@@ -422,8 +423,40 @@ function aiTurn(state: ChessState): ChessState {
 
 const PV: Record<PieceType, number> = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
 
+function ChessHelp({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="game-overlay" onClick={onClose}>
+      <div className="game-overlay-text" style={{ maxWidth: 420, textAlign: 'left' }} onClick={(e) => e.stopPropagation()}>
+        <div className="game-over-title" style={{ textAlign: 'center' }}>Chess Help</div>
+        <div style={{ fontSize: 12, lineHeight: 1.6, color: '#ccc' }}>
+          <p><b style={{ color: '#00ff9f' }}>How to play:</b> Click a white piece to select it, then click a highlighted square to move.</p>
+          <p><b style={{ color: '#00ff9f' }}>Piece Values:</b></p>
+          <p>{' '}
+            <span style={{ fontSize: 18 }}>{'\u2659'}</span> Pawn = 1 pts &nbsp;
+            <span style={{ fontSize: 18 }}>{'\u2658'}</span> Knight = 3 pts &nbsp;
+            <span style={{ fontSize: 18 }}>{'\u2657'}</span> Bishop = 3 pts
+          </p>
+          <p>{' '}
+            <span style={{ fontSize: 18 }}>{'\u2656'}</span> Rook = 5 pts &nbsp;
+            <span style={{ fontSize: 18 }}>{'\u2655'}</span> Queen = 9 pts &nbsp;
+            <span style={{ fontSize: 18 }}>{'\u2654'}</span> King = &infin;
+          </p>
+          <p><b style={{ color: '#00ff9f' }}>Special moves:</b></p>
+          <p>&bull; Castling: King moves 2 squares toward a rook (first move of both)</p>
+          <p>&bull; En Passant: Pawn captures diagonally after enemy pawn double-push</p>
+          <p>&bull; Promotion: Pawn reaching the back rank becomes Q/R/B/N</p>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button className="game-btn" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ChessGame() {
   const [gs, setGs] = useState<ChessState>(init);
+  const [showHelp, setShowHelp] = useState(false);
   const gsRef = useRef(gs);
   useEffect(() => { gsRef.current = gs; });
 
@@ -442,6 +475,7 @@ export default function ChessGame() {
         }
         const move = prev.legal.find((m) => m.to.row === row && m.to.col === col);
         if (move) {
+          playClick();
           if (move.promotion) {
             return { ...prev, promotionPending: { from: move.from, to: move.to }, selected: null, legal: [] };
           }
@@ -468,6 +502,7 @@ export default function ChessGame() {
                m.to.row === to.row && m.to.col === to.col && m.promotion === pieceType
       );
       if (!move) return { ...prev, promotionPending: null };
+      playClick();
       const ns = makeMove(prev, move);
       setTimeout(() => setGs((c) => aiTurn(c)), 150);
       return ns;
@@ -498,6 +533,7 @@ export default function ChessGame() {
     <div className="game-container chess-game">
       <div className="game-header">
         <span className="game-score">{status}</span>
+        <button className="game-btn" onClick={() => setShowHelp(true)} title="Help">?</button>
         <button className="game-btn" onClick={resetGame}>New Game</button>
       </div>
 
@@ -582,6 +618,8 @@ export default function ChessGame() {
           </div>
         </div>
       )}
+
+      {showHelp && <ChessHelp onClose={() => setShowHelp(false)} />}
 
       {gs.promotionPending && (
         <div className="game-overlay" onClick={(e) => e.stopPropagation()}>

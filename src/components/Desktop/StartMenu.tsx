@@ -82,7 +82,7 @@ export default function StartMenu({ isOpen, onClose, onOpenApp }: StartMenuProps
       />
 
       {/* Menu */}
-      <div className="start-menu">
+      <div className="start-menu" role="navigation" aria-label="Start menu">
         <div className="start-menu__header">
           <span className="start-menu__logo">⬛</span>
           <span className="start-menu__title">Mangeluk OS</span>

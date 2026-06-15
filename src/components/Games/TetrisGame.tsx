@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { playClear, playGameOver } from '@/lib/sound';
 
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
@@ -182,6 +183,7 @@ function tick(state: GameState): GameState {
   const newBoard = placePiece(state.board, state.piece.shape, state.piece.color, state.pos);
   const { board: clearedBoard, cleared } = clearFullLines(newBoard);
 
+  if (cleared > 0) playClear();
   const points = [0, 100, 300, 500, 800];
   const newScore = state.score + (cleared > 0 ? points[cleared] * state.level : 0);
   const newLines = state.lines + cleared;
@@ -193,6 +195,7 @@ function tick(state: GameState): GameState {
   const newPiece = { ...TETROMINOS[key], key };
 
   if (!isValid(clearedBoard, newPiece.shape, startPos)) {
+    playGameOver();
     const hs = Math.max(newScore, state.highScore);
     saveHighScore(hs);
     return { ...state, board: clearedBoard, score: newScore, lines: newLines, level: newLevel, gameOver: true, highScore: hs };

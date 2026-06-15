@@ -117,8 +117,31 @@ function scoreForMove(destType: string): number {
   return 0;
 }
 
+function SolitaireHelp({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="game-overlay" onClick={onClose}>
+      <div className="game-overlay-text" style={{ maxWidth: 400, textAlign: 'left' }} onClick={(e) => e.stopPropagation()}>
+        <div className="game-over-title" style={{ textAlign: 'center' }}>Solitaire Help</div>
+        <div style={{ fontSize: 12, lineHeight: 1.6, color: '#ccc' }}>
+          <p><b style={{ color: '#00ff9f' }}>Drag:</b> Drag face-up cards to tableau or foundation piles.</p>
+          <p><b style={{ color: '#00ff9f' }}>Tableau:</b> Place cards in descending rank, alternating colors (e.g. red 7 on black 8).</p>
+          <p><b style={{ color: '#00ff9f' }}>Foundation:</b> Build up by suit from Ace to King.</p>
+          <p><b style={{ color: '#00ff9f' }}>Double-click:</b> Auto-places a card to its foundation.</p>
+          <p><b style={{ color: '#00ff9f' }}>Stock pile:</b> Click to draw cards to waste. Click empty stock to recycle.</p>
+          <p><b style={{ color: '#00ff9f' }}>Auto Complete:</b> Button automatically moves all eligible cards to foundations.</p>
+          <p><b style={{ color: '#00ff9f' }}>ESC:</b> Start a new game.</p>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button className="game-btn" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SolitaireGame() {
   const [gs, setGs] = useState<GameState>(initGame);
+  const [showHelp, setShowHelp] = useState(false);
   const [dragInfo, setDragInfo] = useState<DragInfo | null>(null);
   const dragRef = useRef<DragInfo | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -503,7 +526,7 @@ export default function SolitaireGame() {
     });
   }, []);
 
-  const cardColor = (suit: Suit) => (isRed(suit) ? '#ff4444' : '#1a1a2e');
+  const cardColor = (suit: Suit) => (isRed(suit) ? 'var(--solitaire-red)' : 'var(--solitaire-black)');
 
   const renderCard = (card: Card, style?: React.CSSProperties) => {
     if (!card.faceUp) {
@@ -540,6 +563,7 @@ export default function SolitaireGame() {
     <div className="game-container solitaire-container">
       <div className="solitaire-header">
         <span className="game-score">Solitaire</span>
+        <button className="game-btn" onClick={() => setShowHelp(true)} title="Help">?</button>
         <span className="game-controls">Moves: {gs.moves}</span>
         <span className="game-controls">Score: {gs.score}</span>
       </div>
@@ -662,6 +686,8 @@ export default function SolitaireGame() {
           ))}
         </div>
       )}
+
+      {showHelp && <SolitaireHelp onClose={() => setShowHelp(false)} />}
 
       {gs.won && (
         <div className="game-overlay">

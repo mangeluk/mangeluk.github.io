@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { playClick, playMineHit } from '@/lib/sound';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -119,12 +120,14 @@ function handleClick(state: GameSnapshot, r: number, c: number): GameSnapshot {
   }
 
   if (board[r][c].isMine) {
+    playMineHit();
     const newBoard = board.map((row) =>
       row.map((cell) => ({ ...cell, isRevealed: true }))
     );
     return { ...state, board: newBoard, gameOver: true, firstClick: false };
   }
 
+  playClick();
   const newBoard = board.map((row) => row.map((cell) => ({ ...cell })));
   revealCells(newBoard, r, c);
   const won = checkWin(newBoard);
@@ -160,25 +163,50 @@ function resetState(difficulty: Difficulty = 'medium'): GameSnapshot {
   };
 }
 
+function loadBestTimes(): Record<Difficulty, number> {
+  try {
+    const raw = localStorage.getItem('minesweeper-best-times');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { easy: Infinity, medium: Infinity, hard: Infinity };
+}
+
+function saveBestTime(difficulty: Difficulty, time: number) {
+  try {
+    const best = loadBestTimes();
+    if (time < best[difficulty]) {
+      best[difficulty] = time;
+      localStorage.setItem('minesweeper-best-times', JSON.stringify(best));
+    }
+  } catch {}
+}
+
 const NUMBER_COLORS: Record<number, string> = {
-  1: '#1976D2',
-  2: '#388E3C',
-  3: '#D32F2F',
-  4: '#7B1FA2',
-  5: '#FF8F00',
-  6: '#00838F',
-  7: '#424242',
-  8: '#78909C',
+  1: 'var(--ms-num-1)',
+  2: 'var(--ms-num-2)',
+  3: 'var(--ms-num-3)',
+  4: 'var(--ms-num-4)',
+  5: 'var(--ms-num-5)',
+  6: 'var(--ms-num-6)',
+  7: 'var(--ms-num-7)',
+  8: 'var(--ms-num-8)',
 };
 
 export default function Minesweeper() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [gs, setGs] = useState<GameSnapshot>(() => resetState('medium'));
   const [timer, setTimer] = useState(0);
+  const [bestTimes, setBestTimes] = useState(loadBestTimes);
   const gsRef = useRef(gs);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => { gsRef.current = gs; });
+  useEffect(() => {
+    if (gs.gameWon) {
+      saveBestTime(difficulty, timer);
+      setBestTimes(loadBestTimes());
+    }
+  }, [gs.gameWon, difficulty, timer]);
   useEffect(() => {
     if (gs.firstClick || gs.gameOver || gs.gameWon) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -269,6 +297,9 @@ export default function Minesweeper() {
       <div className="game-header">
         <span className="game-score">{'\u{1F4A3}'} {gs.mines - gs.flagCount}</span>
         <span className="game-controls">{formatTime(timer)}</span>
+        {bestTimes[difficulty] < Infinity && (
+          <span className="game-controls" style={{ color: '#ffb86c' }}>Best: {formatTime(bestTimes[difficulty])}</span>
+        )}
         <button className="game-btn" onClick={resetGame}>New Game</button>
       </div>
 
@@ -302,6 +333,9 @@ export default function Minesweeper() {
           <div className="game-overlay-text">
             <div className="game-over-title">{gs.gameWon ? 'YOU WIN!' : 'GAME OVER'}</div>
             <div className="game-over-score">Time: {formatTime(timer)}</div>
+            {gs.gameWon && bestTimes[difficulty] >= timer && (
+              <div className="game-over-hint" style={{ color: '#ffb86c' }}>NEW BEST TIME!</div>
+            )}
             <div className="game-over-hint">Press ENTER to restart</div>
           </div>
         </div>

@@ -212,7 +212,10 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
 
   // ── Persist command history and aliases ──
   useEffect(() => {
-    try { localStorage.setItem('terminal-cmd-history', JSON.stringify(commandHistory)); } catch {}
+    try {
+      const trimmed = commandHistory.length > 100 ? commandHistory.slice(-100) : commandHistory;
+      localStorage.setItem('terminal-cmd-history', JSON.stringify(trimmed));
+    } catch {}
   }, [commandHistory]);
 
   useEffect(() => {
@@ -328,7 +331,8 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
         setCommandHistory((prev) => {
           if (!raw || raw.trim() === '') return prev;
           if (prev.length > 0 && prev[prev.length - 1] === raw) return prev;
-          return [...prev, raw];
+          const next = [...prev, raw];
+          return next.length > 100 ? next.slice(-100) : next;
         });
       } else {
         setCommandHistory([]);
@@ -361,8 +365,9 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
             );
           })
           .catch((err: Error) => {
+            const msg = err.message || 'Error desconocido.';
             setHistory((prev) =>
-              prev.map((e) => e.id === loaderId ? { ...e, type: 'error', content: err.message || 'Error desconocido.' } : e)
+              prev.map((e) => e.id === loaderId ? { ...e, type: 'error', content: msg.includes('Error') ? msg : `Error: ${msg}` } : e)
             );
           })
           .finally(() => setIsLoading(false));
