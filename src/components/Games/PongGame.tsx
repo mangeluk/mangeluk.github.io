@@ -9,13 +9,16 @@ const PADDLE_HEIGHT = 80;
 const BALL_SIZE = 10;
 const PADDLE_SPEED = 6;
 const BALL_SPEED_INITIAL = 5;
-const AI_SPEED = 4;
+const BALL_SPEED_MAX = BALL_SPEED_INITIAL * 2;
+const AI_SPEED_MAP = { easy: 2, medium: 4, hard: 6 } as const;
+type Difficulty = keyof typeof AI_SPEED_MAP;
 
 export default function PongGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [score, setScore] = useState({ player: 0, ai: 0 });
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'paused' | 'gameover'>('idle');
   const [winner, setWinner] = useState<'player' | 'ai' | null>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
 
   const gameStateRef = useRef({
     playerY: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
@@ -70,11 +73,12 @@ export default function PongGame() {
     }
 
     // AI movement
+    const aiSpeed = AI_SPEED_MAP[difficulty];
     const aiCenter = gs.aiY + PADDLE_HEIGHT / 2;
     if (aiCenter < gs.ballY - 10) {
-      gs.aiY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, gs.aiY + AI_SPEED);
+      gs.aiY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, gs.aiY + aiSpeed);
     } else if (aiCenter > gs.ballY + 10) {
-      gs.aiY = Math.max(0, gs.aiY - AI_SPEED);
+      gs.aiY = Math.max(0, gs.aiY - aiSpeed);
     }
 
     // Ball movement
@@ -94,7 +98,7 @@ export default function PongGame() {
       gs.ballY <= gs.playerY + PADDLE_HEIGHT &&
       gs.ballVx < 0
     ) {
-      gs.ballVx = -gs.ballVx * 1.05;
+      gs.ballVx = Math.min(BALL_SPEED_MAX, Math.abs(gs.ballVx * 1.05)) * (gs.ballVx > 0 ? -1 : 1);
       const hitPos = (gs.ballY - gs.playerY) / PADDLE_HEIGHT;
       gs.ballVy = (hitPos - 0.5) * 8;
     }
@@ -106,7 +110,7 @@ export default function PongGame() {
       gs.ballY <= gs.aiY + PADDLE_HEIGHT &&
       gs.ballVx > 0
     ) {
-      gs.ballVx = -gs.ballVx * 1.05;
+      gs.ballVx = -Math.min(BALL_SPEED_MAX, Math.abs(gs.ballVx * 1.05));
       const hitPos = (gs.ballY - gs.aiY) / PADDLE_HEIGHT;
       gs.ballVy = (hitPos - 0.5) * 8;
     }
@@ -166,7 +170,7 @@ export default function PongGame() {
     ctx.fillText(String(gs.score.ai), (CANVAS_WIDTH * 3) / 4, 40);
 
     animRef.current = requestAnimationFrame(gameLoopRef.current!);
-  }, [resetBall]);
+  }, [resetBall, difficulty]);
 
   useEffect(() => {
     gameLoopRef.current = gameLoop;
@@ -231,6 +235,17 @@ export default function PongGame() {
         <div className="game-overlay">
           <div className="game-overlay-text">
             <div className="game-over-title">PONG</div>
+            <div className="difficulty-selector">
+              {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
+                <button
+                  key={d}
+                  className={`difficulty-btn ${difficulty === d ? 'difficulty-btn--active' : ''}`}
+                  onClick={() => setDifficulty(d)}
+                >
+                  {d.charAt(0).toUpperCase() + d.slice(1)}
+                </button>
+              ))}
+            </div>
             <div className="game-over-hint">Press ENTER to start</div>
           </div>
         </div>

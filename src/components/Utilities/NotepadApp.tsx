@@ -9,6 +9,7 @@ export default function NotepadApp() {
   const [wordWrap, setWordWrap] = useState(true);
   const [saved, setSaved] = useState(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const lineCount = content.split('\n').length;
@@ -73,6 +74,12 @@ export default function NotepadApp() {
     if (!fileName.trim()) setFileName('untitled.txt');
   }, [fileName]);
 
+  const handleScroll = useCallback(() => {
+    if (textareaRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  }, []);
+
   useEffect(() => {
     if (isEditingName && nameInputRef.current) {
       nameInputRef.current.focus();
@@ -117,7 +124,7 @@ export default function NotepadApp() {
         )}
       </div>
       <div className="notepad-editor">
-        <div className="notepad-line-numbers">
+        <div className="notepad-line-numbers" ref={lineNumbersRef}>
           {Array.from({ length: lineCount }, (_, i) => (
             <div key={i}>{i + 1}</div>
           ))}
@@ -127,6 +134,7 @@ export default function NotepadApp() {
           className="notepad-textarea"
           value={content}
           onChange={handleChange}
+          onScroll={handleScroll}
           wrap={wordWrap ? 'soft' : 'off'}
           spellCheck={false}
           placeholder="Start typing..."

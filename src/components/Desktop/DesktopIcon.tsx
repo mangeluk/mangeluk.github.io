@@ -55,13 +55,23 @@ export default function DesktopIcon({ icon, label, onDoubleClick, onRightClick, 
     onRightClick?.({ x: e.clientX, y: e.clientY, iconId });
   }, [onRightClick, iconId]);
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!dragMoved.current) onDoubleClick();
+    }
+  }, [onDoubleClick]);
+
   return (
     <button
       className={`desktop-icon ${isDragActive ? 'desktop-icon--dragging' : ''}`}
+      role="button"
+      tabIndex={0}
       onDoubleClick={(e) => {
         e.stopPropagation();
         if (!dragMoved.current) onDoubleClick();
       }}
+      onKeyDown={handleKeyDown}
       onMouseDown={handleMouseDown}
       onContextMenu={handleContextMenu}
       aria-label={`Open ${label}`}

@@ -47,6 +47,15 @@ export default function SettingsApp({ theme, lang, setTheme, setLang }: Settings
     document.documentElement.style.setProperty('--term-font-size', px);
   }, []);
 
+  const handleReset = useCallback(() => {
+    setTheme('dark');
+    setLang('es');
+    handleFontSizeChange('medium');
+    localStorage.removeItem('terminal-theme');
+    localStorage.removeItem('terminal-lang');
+    localStorage.removeItem('terminal-font-size');
+  }, [setTheme, setLang, handleFontSizeChange]);
+
   return (
     <div className="settings-container">
       <div className="settings-section">
@@ -100,6 +109,12 @@ export default function SettingsApp({ theme, lang, setTheme, setLang }: Settings
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="settings-section">
+        <button className="settings-reset-btn" onClick={handleReset}>
+          {lang === 'es' ? 'Restablecer valores predeterminados' : 'Reset to Defaults'}
+        </button>
       </div>
 
       <div className="settings-section">

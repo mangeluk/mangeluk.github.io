@@ -72,8 +72,11 @@ export default function Taskbar({ apps, lang, onToggleLang, onStartClick, isStar
   const [isCharging, setIsCharging] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    setIsOnline(navigator.onLine);
+    const raf = requestAnimationFrame(() => {
+      setMounted(true);
+      setIsOnline(navigator.onLine);
+    });
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   useEffect(() => {

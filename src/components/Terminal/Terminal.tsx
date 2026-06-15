@@ -518,6 +518,7 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
           disabled={isLoading}
           prompt={`visitor@portfolio:${currentDir}$`}
           commandHistory={commandHistory}
+          currentDir={currentDir}
         />
       </div>
     </div>

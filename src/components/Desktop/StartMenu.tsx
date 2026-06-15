@@ -52,7 +52,13 @@ const CATEGORIES = {
 };
 
 export default function StartMenu({ isOpen, onClose, onOpenApp }: StartMenuProps) {
+  const [search, setSearch] = React.useState('');
+
   if (!isOpen) return null;
+
+  const filteredItems = search.trim()
+    ? MENU_ITEMS.filter((item) => item.label.toLowerCase().includes(search.toLowerCase()))
+    : MENU_ITEMS;
 
   const handleItemClick = (item: MenuItem) => {
     if (item.category === 'games') {
@@ -82,10 +88,21 @@ export default function StartMenu({ isOpen, onClose, onOpenApp }: StartMenuProps
           <span className="start-menu__title">Mangeluk OS</span>
         </div>
 
+        <div className="start-menu__search">
+          <input
+            type="text"
+            className="start-menu__search-input"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            autoFocus
+          />
+        </div>
+
         <div className="start-menu__content">
           {(Object.keys(CATEGORIES) as Array<keyof typeof CATEGORIES>).map((catKey) => {
             const cat = CATEGORIES[catKey];
-            const items = MENU_ITEMS.filter((item) => item.category === catKey);
+            const items = filteredItems.filter((item) => item.category === catKey);
             if (items.length === 0) return null;
 
             return (

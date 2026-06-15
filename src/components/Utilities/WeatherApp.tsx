@@ -12,7 +12,6 @@ interface WeatherData {
   description: string;
   icon: string;
   pressure: number;
-  visibility: number;
   timezone: string;
 }
 
@@ -56,6 +55,7 @@ export default function WeatherApp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [city, setCity] = useState('');
+  const [useCelsius, setUseCelsius] = useState(true);
 
   const fetchWeather = useCallback(async (cityName: string) => {
     if (!cityName.trim()) return;
@@ -99,7 +99,6 @@ export default function WeatherApp() {
         description: weatherInfo.desc,
         icon: weatherInfo.icon,
         pressure: Math.round(current.surface_pressure),
-        visibility: 10,
         timezone: data.timezone || '',
       });
     } catch {
@@ -113,6 +112,10 @@ export default function WeatherApp() {
     if (e.key === 'Enter') fetchWeather(city);
   }, [city, fetchWeather]);
 
+  const toF = (c: number) => Math.round(c * 9 / 5 + 32);
+  const unit = useCelsius ? '°C' : '°F';
+  const fmtTemp = (c: number) => `${useCelsius ? c : toF(c)}${unit}`;
+
   return (
     <div className="weather-container">
       <div className="weather-search">
@@ -125,6 +128,13 @@ export default function WeatherApp() {
           onKeyDown={handleKeyDown}
         />
         <button className="weather-btn" onClick={() => fetchWeather(city)}>Go</button>
+        <button
+          className="weather-btn"
+          onClick={() => setUseCelsius((v) => !v)}
+          title="Toggle temperature unit"
+        >
+          {useCelsius ? '°F' : '°C'}
+        </button>
       </div>
 
       <div className="weather-presets">
@@ -146,7 +156,7 @@ export default function WeatherApp() {
         <div className="weather-card">
           <div className="weather-main">
             <div className="weather-icon">{weather.icon}</div>
-            <div className="weather-temp">{weather.temp}°C</div>
+            <div className="weather-temp">{fmtTemp(weather.temp)}</div>
             <div className="weather-location">
               {weather.city}{weather.country ? `, ${weather.country}` : ''}
             </div>
@@ -154,7 +164,7 @@ export default function WeatherApp() {
           </div>
           <div className="weather-details">
             <div className="weather-detail">
-              <span>Feels like</span><span>{weather.feelsLike}°C</span>
+              <span>Feels like</span><span>{fmtTemp(weather.feelsLike)}</span>
             </div>
             <div className="weather-detail">
               <span>Humidity</span><span>{weather.humidity}%</span>

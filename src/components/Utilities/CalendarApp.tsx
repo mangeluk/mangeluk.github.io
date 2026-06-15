@@ -20,11 +20,10 @@ function padZero(n: number): string {
   return n < 10 ? `0${n}` : `${n}`;
 }
 
-export default function CalendarApp() {
+export default function CalendarApp({ lang = 'es' }: { lang?: string }) {
   const [now, setNow] = useState(new Date());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [viewYear, setViewYear] = useState(now.getFullYear());
-  const [lang] = useState('es');
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);

@@ -2,9 +2,14 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
-const ROWS = 16;
-const COLS = 16;
-const MINES = 40;
+type Difficulty = 'easy' | 'medium' | 'hard';
+
+const DIFFICULTIES: Record<Difficulty, { rows: number; cols: number; mines: number }> = {
+  easy: { rows: 9, cols: 9, mines: 10 },
+  medium: { rows: 16, cols: 16, mines: 40 },
+  hard: { rows: 16, cols: 30, mines: 99 },
+};
+
 const CELL_SIZE = 28;
 
 type CellState = {
@@ -14,9 +19,9 @@ type CellState = {
   adjacentMines: number;
 };
 
-function createEmptyBoard(): CellState[][] {
-  return Array.from({ length: ROWS }, () =>
-    Array.from({ length: COLS }, () => ({
+function createEmptyBoard(rows: number, cols: number): CellState[][] {
+  return Array.from({ length: rows }, () =>
+    Array.from({ length: cols }, () => ({
       isMine: false,
       isRevealed: false,
       isFlagged: false,
@@ -25,19 +30,21 @@ function createEmptyBoard(): CellState[][] {
   );
 }
 
-function placeMines(board: CellState[][], safeRow: number, safeCol: number): CellState[][] {
+function placeMines(board: CellState[][], safeRow: number, safeCol: number, mines: number): CellState[][] {
+  const rows = board.length;
+  const cols = board[0].length;
   const newBoard = board.map((row) => row.map((cell) => ({ ...cell })));
   let placed = 0;
-  while (placed < MINES) {
-    const r = Math.floor(Math.random() * ROWS);
-    const c = Math.floor(Math.random() * COLS);
+  while (placed < mines) {
+    const r = Math.floor(Math.random() * rows);
+    const c = Math.floor(Math.random() * cols);
     if (newBoard[r][c].isMine) continue;
     if (Math.abs(r - safeRow) <= 1 && Math.abs(c - safeCol) <= 1) continue;
     newBoard[r][c].isMine = true;
     placed++;
   }
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
       if (newBoard[r][c].isMine) continue;
       let count = 0;
       for (let dr = -1; dr <= 1; dr++) {
@@ -45,7 +52,7 @@ function placeMines(board: CellState[][], safeRow: number, safeCol: number): Cel
           if (dr === 0 && dc === 0) continue;
           const nr = r + dr;
           const nc = c + dc;
-          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && newBoard[nr][nc].isMine) {
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && newBoard[nr][nc].isMine) {
             count++;
           }
         }
@@ -57,7 +64,9 @@ function placeMines(board: CellState[][], safeRow: number, safeCol: number): Cel
 }
 
 function revealCells(board: CellState[][], r: number, c: number): void {
-  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+  const rows = board.length;
+  const cols = board[0].length;
+  if (r < 0 || r >= rows || c < 0 || c >= cols) return;
   if (board[r][c].isRevealed || board[r][c].isFlagged) return;
   board[r][c].isRevealed = true;
   if (board[r][c].adjacentMines === 0 && !board[r][c].isMine) {
@@ -71,8 +80,8 @@ function revealCells(board: CellState[][], r: number, c: number): void {
 }
 
 function checkWin(board: CellState[][]): boolean {
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[0].length; c++) {
       if (!board[r][c].isMine && !board[r][c].isRevealed) return false;
     }
   }
@@ -95,6 +104,9 @@ interface GameSnapshot {
   gameWon: boolean;
   firstClick: boolean;
   flagCount: number;
+  rows: number;
+  cols: number;
+  mines: number;
 }
 
 function handleClick(state: GameSnapshot, r: number, c: number): GameSnapshot {
@@ -103,7 +115,7 @@ function handleClick(state: GameSnapshot, r: number, c: number): GameSnapshot {
 
   let board = state.board;
   if (state.firstClick) {
-    board = placeMines(board, r, c);
+    board = placeMines(board, r, c, state.mines);
   }
 
   if (board[r][c].isMine) {
@@ -117,6 +129,7 @@ function handleClick(state: GameSnapshot, r: number, c: number): GameSnapshot {
   revealCells(newBoard, r, c);
   const won = checkWin(newBoard);
   return {
+    ...state,
     board: newBoard,
     gameOver: false,
     gameWon: won,
@@ -133,13 +146,17 @@ function handleRightClick(state: GameSnapshot, r: number, c: number): GameSnapsh
   return { ...state, board: newBoard, flagCount: flagCount(newBoard) };
 }
 
-function resetState(): GameSnapshot {
+function resetState(difficulty: Difficulty = 'medium'): GameSnapshot {
+  const { rows, cols, mines } = DIFFICULTIES[difficulty];
   return {
-    board: createEmptyBoard(),
+    board: createEmptyBoard(rows, cols),
     gameOver: false,
     gameWon: false,
     firstClick: true,
     flagCount: 0,
+    rows,
+    cols,
+    mines,
   };
 }
 
@@ -155,7 +172,8 @@ const NUMBER_COLORS: Record<number, string> = {
 };
 
 export default function Minesweeper() {
-  const [gs, setGs] = useState<GameSnapshot>(resetState);
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [gs, setGs] = useState<GameSnapshot>(() => resetState('medium'));
   const [timer, setTimer] = useState(0);
   const gsRef = useRef(gs);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -173,7 +191,13 @@ export default function Minesweeper() {
   }, [gs.firstClick, gs.gameOver, gs.gameWon]);
 
   const resetGame = useCallback(() => {
-    setGs(resetState());
+    setGs(resetState(difficulty));
+    setTimer(0);
+  }, [difficulty]);
+
+  const handleDifficultyChange = useCallback((d: Difficulty) => {
+    setDifficulty(d);
+    setGs(resetState(d));
     setTimer(0);
   }, []);
 
@@ -187,6 +211,7 @@ export default function Minesweeper() {
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
   }, []);
 
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -229,13 +254,25 @@ export default function Minesweeper() {
 
   return (
     <div className="game-container minesweeper-game" onContextMenu={handleContextMenu}>
+      <div className="difficulty-selector">
+        {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
+          <button
+            key={d}
+            className={`game-btn difficulty-btn ${difficulty === d ? 'difficulty-active' : ''}`}
+            onClick={() => handleDifficultyChange(d)}
+          >
+            {d === 'easy' ? 'Easy (9x9)' : d === 'medium' ? 'Medium (16x16)' : 'Hard (16x30)'}
+          </button>
+        ))}
+      </div>
+
       <div className="game-header">
-        <span className="game-score">{'\u{1F4A3}'} {MINES - gs.flagCount}</span>
+        <span className="game-score">{'\u{1F4A3}'} {gs.mines - gs.flagCount}</span>
         <span className="game-controls">{formatTime(timer)}</span>
         <button className="game-btn" onClick={resetGame}>New Game</button>
       </div>
 
-      <div className="minesweeper-board">
+      <div className="minesweeper-board" style={{ gridTemplateColumns: `repeat(${gs.cols}, ${CELL_SIZE}px)` }}>
         {gs.board.map((row, r) =>
           row.map((cell, c) => {
             const numColor = cell.adjacentMines > 0 ? NUMBER_COLORS[cell.adjacentMines] : undefined;
@@ -245,7 +282,7 @@ export default function Minesweeper() {
                 className={`ms-cell ${cell.isRevealed ? 'ms-revealed' : 'ms-hidden'} ${cell.isFlagged ? 'ms-flagged' : ''} ${cell.isRevealed && cell.isMine ? 'ms-mine' : ''}`}
                 style={{ width: CELL_SIZE, height: CELL_SIZE }}
                 onClick={() => handleCellClick(r, c)}
-                onContextMenu={(e) => { e.preventDefault(); handleCellRightClick(r, c); }}
+                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); handleCellRightClick(r, c); }}
                 onTouchStart={() => handleTouchStartCell(r, c)}
                 onTouchEnd={() => handleTouchEndCell(r, c)}
               >

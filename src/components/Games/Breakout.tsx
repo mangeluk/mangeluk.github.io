@@ -184,6 +184,7 @@ export default function Breakout() {
   const [gs, setGs] = useState<GameState>(initGameState);
   const gsRef = useRef(gs);
   const paddleXRef = useRef((CANVAS_WIDTH - PADDLE_WIDTH) / 2);
+  const keysRef = useRef(new Set<string>());
   const animRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -238,17 +239,44 @@ export default function Breakout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      keysRef.current.add(e.key);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      keysRef.current.delete(e.key);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
+
   // Game loop
   useEffect(() => {
+    const PADDLE_SPEED = 7;
     const loop = () => {
+      const keys = keysRef.current;
+      if (keys.has('ArrowLeft') || keys.has('a') || keys.has('A')) {
+        paddleXRef.current = Math.max(0, paddleXRef.current - PADDLE_SPEED);
+      }
+      if (keys.has('ArrowRight') || keys.has('d') || keys.has('D')) {
+        paddleXRef.current = Math.min(CANVAS_WIDTH - PADDLE_WIDTH, paddleXRef.current + PADDLE_SPEED);
+      }
       setGs((prev) => tick(prev, paddleXRef.current));
-      animRef.current = requestAnimationFrame(loop);
+      if (gsRef.current.started && !gsRef.current.gameOver && !gsRef.current.gameWon) {
+        animRef.current = requestAnimationFrame(loop);
+      }
     };
-    animRef.current = requestAnimationFrame(loop);
+    if (gsRef.current.started && !gsRef.current.gameOver && !gsRef.current.gameWon) {
+      animRef.current = requestAnimationFrame(loop);
+    }
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, []);
+  }, [gs.started, gs.gameOver, gs.gameWon]);
 
   // Draw
   useEffect(() => {
@@ -317,7 +345,7 @@ export default function Breakout() {
       )}
 
       <div className="game-footer">
-        <span>Move mouse to control paddle</span>
+        <span>Mouse / Arrow keys to move paddle</span>
         <span>Break all bricks to win</span>
       </div>
     </div>

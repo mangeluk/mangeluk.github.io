@@ -256,6 +256,17 @@ export default function TetrisGame() {
     });
   }, []);
 
+  const softDrop = useCallback(() => {
+    setGs((prev) => {
+      if (prev.gameOver || prev.paused) return prev;
+      const newPos = { ...prev.pos, y: prev.pos.y + 1 };
+      if (isValid(prev.board, prev.piece.shape, newPos)) {
+        return { ...prev, pos: newPos, score: prev.score + 1 };
+      }
+      return prev;
+    });
+  }, []);
+
   const hardDrop = useCallback(() => {
     setGs((prev) => {
       if (prev.gameOver || prev.paused) return prev;
@@ -319,18 +330,19 @@ export default function TetrisGame() {
       const actions: Record<string, () => void> = {
         ArrowLeft: () => move(-1),
         ArrowRight: () => move(1),
-        ArrowDown: () => hardDrop(),
+        ArrowDown: () => softDrop(),
         ArrowUp: () => rotatePiece(),
         z: () => rotatePiece(),
         x: () => rotatePiece(),
         c: () => holdPiece(),
+        ' ': () => hardDrop(),
       };
       const action = actions[e.key];
       if (action) { e.preventDefault(); action(); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [move, hardDrop, rotatePiece, holdPiece, resetGame, togglePause]);
+  }, [move, softDrop, hardDrop, rotatePiece, holdPiece, resetGame, togglePause]);
 
   const touchRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -457,7 +469,8 @@ export default function TetrisGame() {
       <div className="game-footer">
         <span>&#8592; &#8594; Move</span>
         <span>&#8593; Rotate</span>
-        <span>&#8595; Drop</span>
+        <span>&#8595; Soft Drop</span>
+        <span>Space Hard Drop</span>
         <span>C Hold</span>
         <span>ESC Pause</span>
       </div>

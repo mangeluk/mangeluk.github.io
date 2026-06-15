@@ -17,10 +17,11 @@ interface InputLineProps {
   disabled: boolean;
   prompt: string;
   commandHistory?: string[];
+  currentDir?: string;
 }
 
 const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLine(
-  { value, onChange, onSubmit, onArrowUp, onArrowDown, disabled, prompt, commandHistory = [] },
+  { value, onChange, onSubmit, onArrowUp, onArrowDown, disabled, prompt, commandHistory = [], currentDir = '~' },
   ref
 ) {
   const localRef = useRef<HTMLInputElement>(null);
@@ -254,7 +255,6 @@ const InputLine = forwardRef<HTMLInputElement, InputLineProps>(function InputLin
       }
     } else {
       // Path completion
-      const currentDir = '~';
       const pathPart = parts[parts.length - 1];
       const dirSeparator = pathPart.lastIndexOf('/');
       let dirPath: string;

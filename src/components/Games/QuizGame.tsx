@@ -114,8 +114,17 @@ const QUESTIONS_EN: Question[] = [
   },
 ];
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function QuizGame({ lang }: { lang: 'es' | 'en' }) {
-  const questions = lang === 'es' ? QUESTIONS_ES : QUESTIONS_EN;
+  const [questions] = useState(() => shuffleArray(lang === 'es' ? QUESTIONS_ES : QUESTIONS_EN));
   const [currentQ, setCurrentQ] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);

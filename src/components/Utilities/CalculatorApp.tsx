@@ -42,7 +42,7 @@ export default function CalculatorApp() {
         case '+': result = previousValue + current; break;
         case '-': result = previousValue - current; break;
         case '*': result = previousValue * current; break;
-        case '/': result = current === 0 ? NaN : previousValue / current; break;
+        case '/': result = current === 0 ? Infinity : previousValue / current; break;
         default: result = current;
       }
       setDisplay(String(result));
@@ -62,7 +62,7 @@ export default function CalculatorApp() {
       case '+': result = previousValue + current; break;
       case '-': result = previousValue - current; break;
       case '*': result = previousValue * current; break;
-      case '/': result = current === 0 ? NaN : previousValue / current; break;
+      case '/': result = current === 0 ? Infinity : previousValue / current; break;
       default: result = current;
     }
     setDisplay(String(result));

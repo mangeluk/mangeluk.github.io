@@ -51,6 +51,7 @@ export default function Window({
   const [isResizing, setIsResizing] = useState(false);
   const [snapPreview, setSnapPreview] = useState<SnapPosition>(null);
   const [minimizeState, setMinimizeState] = useState<'none' | 'minimizing' | 'minimized' | 'restoring'>('none');
+  const [isSnapping, setIsSnapping] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const resizeStart = useRef({ x: 0, y: 0, w: 0, h: 0, pos: { x: 0, y: 0 } });
   const resizeDir = useRef<ResizeDirection>('se');
@@ -190,8 +191,8 @@ export default function Window({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
       if (isDragging) {
-        const touch = e.touches[0];
         const newX = touch.clientX - dragOffset.current.x;
         const newY = touch.clientY - dragOffset.current.y;
         setPos({
@@ -200,14 +201,43 @@ export default function Window({
         });
         setSnapPreview(getSnapPosition(touch.clientX, touch.clientY));
       }
+      if (isResizing) {
+        const dx = touch.clientX - resizeStart.current.x;
+        const dy = touch.clientY - resizeStart.current.y;
+        const dir = resizeDir.current;
+        let newW = size.w;
+        let newH = size.h;
+        let newX = pos.x;
+        let newY = pos.y;
+
+        if (dir.includes('e')) {
+          newW = Math.max(400, resizeStart.current.w + dx);
+        }
+        if (dir.includes('w')) {
+          newW = Math.max(400, resizeStart.current.w - dx);
+          newX = resizeStart.current.pos.x + (resizeStart.current.w - newW);
+        }
+        if (dir.includes('s')) {
+          newH = Math.max(300, resizeStart.current.h + dy);
+        }
+        if (dir.includes('n')) {
+          newH = Math.max(300, resizeStart.current.h - dy);
+          newY = resizeStart.current.pos.y + (resizeStart.current.h - newH);
+        }
+
+        setSize({ w: newW, h: newH });
+        setPos({ x: newX, y: newY });
+      }
     };
 
     const handleUp = (e: MouseEvent | TouchEvent) => {
       if (isDragging && snapPreview) {
-        const clientX = 'clientX' in e ? e.clientX : e.touches[0].clientX;
-        const clientY = 'clientY' in e ? e.clientY : e.touches[0].clientY;
+        const clientX = 'clientX' in e ? e.clientX : e.changedTouches[0].clientX;
+        const clientY = 'clientY' in e ? e.clientY : e.changedTouches[0].clientY;
         const finalSnap = getSnapPosition(clientX, clientY);
         applySnap(finalSnap);
+        setIsSnapping(true);
+        setTimeout(() => setIsSnapping(false), 150);
       }
       setSnapPreview(null);
       setIsDragging(false);
@@ -256,13 +286,31 @@ export default function Window({
     };
   }, [size.w, size.h, pos.x, pos.y, onFocus]);
 
+  const handleTouchResizeStart = useCallback((e: React.TouchEvent, dir: ResizeDirection) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onFocus();
+    const touch = e.touches[0];
+    setIsResizing(true);
+    resizeDir.current = dir;
+    resizeStart.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      w: size.w,
+      h: size.h,
+      pos: { x: pos.x, y: pos.y },
+    };
+  }, [size.w, size.h, pos.x, pos.y, onFocus]);
+
   const isFullyMinimized = minimizeState === 'minimized';
 
   if (!isOpen && minimizeState !== 'minimizing' && minimizeState !== 'restoring') return null;
 
+  const snapTransition = isSnapping ? 'all 150ms ease-out' : 'none';
+
   const windowStyle: React.CSSProperties = isMaximized
-    ? { position: 'fixed', top: 0, left: 0, width: '100%', height: 'calc(100% - 48px)', zIndex }
-    : { position: 'fixed', top: pos.y, left: pos.x, width: size.w, height: size.h, zIndex };
+    ? { position: 'fixed', top: 0, left: 0, width: '100%', height: 'calc(100% - 48px)', zIndex, transition: snapTransition }
+    : { position: 'fixed', top: pos.y, left: pos.x, width: size.w, height: size.h, zIndex, transition: snapTransition };
 
   const animClass = minimizeState === 'minimizing' ? 'os-window--minimizing'
     : minimizeState === 'restoring' ? 'os-window--restoring'
@@ -345,14 +393,14 @@ export default function Window({
         {/* Resize handles (8 directions) */}
         {!isMaximized && (
           <>
-            <div className="os-resize-handle os-resize-n" onMouseDown={(e) => handleResizeStart(e, 'n')} />
-            <div className="os-resize-handle os-resize-s" onMouseDown={(e) => handleResizeStart(e, 's')} />
-            <div className="os-resize-handle os-resize-e" onMouseDown={(e) => handleResizeStart(e, 'e')} />
-            <div className="os-resize-handle os-resize-w" onMouseDown={(e) => handleResizeStart(e, 'w')} />
-            <div className="os-resize-handle os-resize-ne" onMouseDown={(e) => handleResizeStart(e, 'ne')} />
-            <div className="os-resize-handle os-resize-nw" onMouseDown={(e) => handleResizeStart(e, 'nw')} />
-            <div className="os-resize-handle os-resize-se" onMouseDown={(e) => handleResizeStart(e, 'se')} />
-            <div className="os-resize-handle os-resize-sw" onMouseDown={(e) => handleResizeStart(e, 'sw')} />
+            <div className="os-resize-handle os-resize-n" onMouseDown={(e) => handleResizeStart(e, 'n')} onTouchStart={(e) => handleTouchResizeStart(e, 'n')} />
+            <div className="os-resize-handle os-resize-s" onMouseDown={(e) => handleResizeStart(e, 's')} onTouchStart={(e) => handleTouchResizeStart(e, 's')} />
+            <div className="os-resize-handle os-resize-e" onMouseDown={(e) => handleResizeStart(e, 'e')} onTouchStart={(e) => handleTouchResizeStart(e, 'e')} />
+            <div className="os-resize-handle os-resize-w" onMouseDown={(e) => handleResizeStart(e, 'w')} onTouchStart={(e) => handleTouchResizeStart(e, 'w')} />
+            <div className="os-resize-handle os-resize-ne" onMouseDown={(e) => handleResizeStart(e, 'ne')} onTouchStart={(e) => handleTouchResizeStart(e, 'ne')} />
+            <div className="os-resize-handle os-resize-nw" onMouseDown={(e) => handleResizeStart(e, 'nw')} onTouchStart={(e) => handleTouchResizeStart(e, 'nw')} />
+            <div className="os-resize-handle os-resize-se" onMouseDown={(e) => handleResizeStart(e, 'se')} onTouchStart={(e) => handleTouchResizeStart(e, 'se')} />
+            <div className="os-resize-handle os-resize-sw" onMouseDown={(e) => handleResizeStart(e, 'sw')} onTouchStart={(e) => handleTouchResizeStart(e, 'sw')} />
           </>
         )}
       </div>

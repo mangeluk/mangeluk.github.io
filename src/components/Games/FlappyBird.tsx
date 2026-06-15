@@ -116,15 +116,24 @@ export default function FlappyBird() {
   }, [resetGame]);
 
   useEffect(() => {
+    if (!gs.started || gs.gameOver) {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      return;
+    }
     const loop = () => {
-      setGs((prev) => tick(prev));
-      animRef.current = requestAnimationFrame(loop);
+      setGs((prev) => {
+        const next = tick(prev);
+        if (!next.gameOver && next.started) {
+          animRef.current = requestAnimationFrame(loop);
+        }
+        return next;
+      });
     };
     animRef.current = requestAnimationFrame(loop);
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, []);
+  }, [gs.started, gs.gameOver]);
 
   useEffect(() => {
     if (!gs.started || gs.gameOver) {

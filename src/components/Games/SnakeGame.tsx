@@ -15,8 +15,14 @@ export default function SnakeGame() {
   const [, setDirection] = useState<Direction>('RIGHT');
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [speed, setSpeed] = useState(INITIAL_SPEED);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('snake-highscore');
+    if (saved) setHighScore(Number(saved));
+  }, []);
   const directionRef = useRef<Direction>('RIGHT');
   const gameLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -71,7 +77,15 @@ export default function SnakeGame() {
 
       // Check food
       if (head.x === food.x && head.y === food.y) {
-        setScore((s) => s + 10);
+        setScore((s) => {
+          const newScore = s + 10;
+          setHighScore((prev) => {
+            const newHigh = Math.max(prev, newScore);
+            if (newHigh > prev) localStorage.setItem('snake-highscore', String(newHigh));
+            return newHigh;
+          });
+          return newScore;
+        });
         setFood(generateFood(newSnake));
         setSpeed((s) => Math.max(50, s - 5));
       } else {
@@ -173,7 +187,7 @@ export default function SnakeGame() {
       onTouchEnd={handleTouchEnd}
     >
       <div className="game-header">
-        <span className="game-score">Score: {score}</span>
+        <span className="game-score">Score: {score} | High: {highScore}</span>
         <span className="game-controls">
           {isPaused ? 'PAUSED' : gameOver ? 'GAME OVER' : `Speed: ${Math.round((INITIAL_SPEED - speed) / 5 + 1)}`}
         </span>

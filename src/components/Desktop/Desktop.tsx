@@ -3,7 +3,7 @@
 // src/components/Desktop/Desktop.tsx
 // Main desktop container with wallpaper, icons, windows, and taskbar.
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { Theme, Lang } from '@/types/terminal';
 import { isValidTheme, isValidLang } from '@/lib/theme';
 
@@ -14,27 +14,28 @@ import Taskbar from './Taskbar';
 import ContentWindow from './ContentWindow';
 import StartMenu from './StartMenu';
 import ContextMenu from './ContextMenu';
-import { SnakeGame } from '../Games';
-import { TetrisGame } from '../Games';
-import { Game2048 } from '../Games';
-import { PongGame } from '../Games';
-import { QuizGame } from '../Games';
-import { DoomGame } from '../Games';
-import { MinesweeperGame } from '../Games';
-import { BreakoutGame } from '../Games';
-import { FlappyBirdGame } from '../Games';
-import { ChessGame } from '../Games';
-import { SolitaireGame } from '../Games';
-import { CalculatorApp } from '../Utilities';
-import { NotepadApp } from '../Utilities';
-import { WeatherApp } from '../Utilities';
-import { SettingsApp } from '../Utilities';
-import { FileManagerApp } from '../Utilities';
-import { CalendarApp } from '../Utilities';
-import { SystemMonitorApp } from '../Utilities';
-import { MusicPlayerApp } from '../Utilities';
-import { PomodoroApp } from '../Utilities';
-import { QRCodeApp } from '../Utilities';
+const SnakeGame = React.lazy(() => import('../Games/SnakeGame'));
+const TetrisGame = React.lazy(() => import('../Games/TetrisGame'));
+const Game2048 = React.lazy(() => import('../Games/Game2048'));
+const PongGame = React.lazy(() => import('../Games/PongGame'));
+const QuizGame = React.lazy(() => import('../Games/QuizGame'));
+const DoomGame = React.lazy(() => import('../Games/DoomGame'));
+const MinesweeperGame = React.lazy(() => import('../Games/Minesweeper'));
+const BreakoutGame = React.lazy(() => import('../Games/Breakout'));
+const FlappyBirdGame = React.lazy(() => import('../Games/FlappyBird'));
+const ChessGame = React.lazy(() => import('../Games/Chess'));
+const SolitaireGame = React.lazy(() => import('../Games/Solitaire'));
+
+const CalculatorApp = React.lazy(() => import('../Utilities/CalculatorApp'));
+const NotepadApp = React.lazy(() => import('../Utilities/NotepadApp'));
+const WeatherApp = React.lazy(() => import('../Utilities/WeatherApp'));
+const SettingsApp = React.lazy(() => import('../Utilities/SettingsApp'));
+const FileManagerApp = React.lazy(() => import('../Utilities/FileManagerApp'));
+const CalendarApp = React.lazy(() => import('../Utilities/CalendarApp'));
+const SystemMonitorApp = React.lazy(() => import('../Utilities/SystemMonitorApp'));
+const MusicPlayerApp = React.lazy(() => import('../Utilities/MusicPlayerApp'));
+const PomodoroApp = React.lazy(() => import('../Utilities/PomodoroApp'));
+const QRCodeApp = React.lazy(() => import('../Utilities/QRCodeApp'));
 
 interface DesktopWindow {
   id: string;
@@ -54,15 +55,42 @@ interface DesktopWindow {
 }
 
 const DESKTOP_ICONS = [
-  { id: 'terminal', icon: '⬛', label: 'Terminal', command: '' },
-  { id: 'about', icon: '👤', label: 'About', contentType: 'about' as const },
-  { id: 'projects', icon: '📂', label: 'Projects', contentType: 'projects' as const },
-  { id: 'skills', icon: '⚡', label: 'Skills', contentType: 'skills' as const },
-  { id: 'experience', icon: '💼', label: 'Experience', contentType: 'experience' as const },
-  { id: 'contact', icon: '📧', label: 'Contact', contentType: 'contact' as const },
+  { id: 'terminal', icon: '⬛', label: 'Terminal', type: 'terminal' as const },
+  { id: 'about', icon: '👤', label: 'About', type: 'content' as const, contentType: 'about' as const },
+  { id: 'projects', icon: '📂', label: 'Projects', type: 'content' as const, contentType: 'projects' as const },
+  { id: 'skills', icon: '⚡', label: 'Skills', type: 'content' as const, contentType: 'skills' as const },
+  { id: 'experience', icon: '💼', label: 'Experience', type: 'content' as const, contentType: 'experience' as const },
+  { id: 'contact', icon: '📧', label: 'Contact', type: 'content' as const, contentType: 'contact' as const },
 ];
 
-const GAME_ICONS: Record<string, { icon: string; label: string }> = {
+const UTILITY_ICONS = [
+  { id: 'calculator', icon: '🧮', label: 'Calculator', type: 'utility' as const },
+  { id: 'notepad', icon: '📝', label: 'Notepad', type: 'utility' as const },
+  { id: 'weather', icon: '🌤️', label: 'Weather', type: 'utility' as const },
+  { id: 'calendar', icon: '📅', label: 'Calendar', type: 'utility' as const },
+  { id: 'settings', icon: '⚙️', label: 'Settings', type: 'utility' as const },
+  { id: 'filemanager', icon: '📁', label: 'File Manager', type: 'utility' as const },
+  { id: 'pomodoro', icon: '🍅', label: 'Pomodoro', type: 'utility' as const },
+  { id: 'qrcode', icon: '📱', label: 'QR Code', type: 'utility' as const },
+  { id: 'sysmonitor', icon: '📊', label: 'Sys Monitor', type: 'utility' as const },
+  { id: 'musicplayer', icon: '🎵', label: 'Music Player', type: 'utility' as const },
+];
+
+const GAME_ICONS = [
+  { id: 'snake', icon: '🐍', label: 'Snake', type: 'game' as const },
+  { id: 'tetris', icon: '🧱', label: 'Tetris', type: 'game' as const },
+  { id: '2048', icon: '🔢', label: '2048', type: 'game' as const },
+  { id: 'pong', icon: '🏓', label: 'Pong', type: 'game' as const },
+  { id: 'chess', icon: '♟️', label: 'Chess', type: 'game' as const },
+  { id: 'solitaire', icon: '🃏', label: 'Solitaire', type: 'game' as const },
+  { id: 'minesweeper', icon: '💣', label: 'Minesweeper', type: 'game' as const },
+  { id: 'flappybird', icon: '🐦', label: 'Flappy Bird', type: 'game' as const },
+  { id: 'breakout', icon: '🧱', label: 'Breakout', type: 'game' as const },
+  { id: 'quiz', icon: '❓', label: 'Quiz', type: 'game' as const },
+  { id: 'doom', icon: '👹', label: 'Doom', type: 'game' as const },
+];
+
+const GAME_ICON_MAP: Record<string, { icon: string; label: string }> = {
   snake: { icon: '🐍', label: 'Snake' },
   tetris: { icon: '🧱', label: 'Tetris' },
   '2048': { icon: '🔢', label: '2048' },
@@ -76,7 +104,7 @@ const GAME_ICONS: Record<string, { icon: string; label: string }> = {
   solitaire: { icon: '🃏', label: 'Solitaire' },
 };
 
-const UTILITY_ICONS: Record<string, { icon: string; label: string }> = {
+const UTILITY_ICON_MAP: Record<string, { icon: string; label: string }> = {
   calculator: { icon: '🧮', label: 'Calculator' },
   notepad: { icon: '📝', label: 'Notepad' },
   weather: { icon: '🌤️', label: 'Weather' },
@@ -127,6 +155,9 @@ export default function Desktop() {
   const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [iconContextMenu, setIconContextMenu] = useState<{ x: number; y: number; iconId: string } | null>(null);
+  const [altTabActive, setAltTabActive] = useState(false);
+  const [altTabIndex, setAltTabIndex] = useState(0);
+  const altHeld = useRef(false);
 
   // Apply saved font size on mount
   useEffect(() => {
@@ -157,6 +188,56 @@ export default function Desktop() {
     setZCounter((z) => z + 1);
   }, []);
 
+  // Alt+Tab window switching
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        if (!altHeld.current) {
+          altHeld.current = true;
+          const openWins = windows.filter((w) => w.isOpen);
+          if (openWins.length > 1) {
+            const currentIdx = openWins.findIndex((w) => w.id === activeWindowId);
+            setAltTabActive(true);
+            setAltTabIndex(currentIdx >= 0 ? (currentIdx + 1) % openWins.length : 0);
+          }
+        }
+        e.preventDefault();
+        return;
+      }
+      if (altHeld.current && e.key === 'Tab') {
+        e.preventDefault();
+        const openWins = windows.filter((w) => w.isOpen);
+        setAltTabIndex((prev) => (prev + (e.shiftKey ? -1 : 1) + openWins.length) % openWins.length);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        altHeld.current = false;
+        if (altTabActive) {
+          const openWins = windows.filter((w) => w.isOpen);
+          if (openWins.length > 0 && altTabIndex < openWins.length) {
+            const targetId = openWins[altTabIndex].id;
+            focusWindow(targetId);
+            setWindows((prev) =>
+              prev.map((w) =>
+                w.id === targetId ? { ...w, isMinimized: false } : w
+              )
+            );
+          }
+          setAltTabActive(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [windows, activeWindowId, altTabActive, altTabIndex, focusWindow]);
+
   const openWindow = useCallback((
     id: string,
     contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact',
@@ -174,12 +255,12 @@ export default function Desktop() {
       let icon = '📄';
       let title = id;
 
-      if (utilityType && UTILITY_ICONS[utilityType]) {
-        icon = UTILITY_ICONS[utilityType].icon;
-        title = UTILITY_ICONS[utilityType].label;
-      } else if (gameType && GAME_ICONS[gameType]) {
-        icon = GAME_ICONS[gameType].icon;
-        title = GAME_ICONS[gameType].label;
+      if (utilityType && UTILITY_ICON_MAP[utilityType]) {
+        icon = UTILITY_ICON_MAP[utilityType].icon;
+        title = UTILITY_ICON_MAP[utilityType].label;
+      } else if (gameType && GAME_ICON_MAP[gameType]) {
+        icon = GAME_ICON_MAP[gameType].icon;
+        title = GAME_ICON_MAP[gameType].label;
       } else {
         const iconDef = DESKTOP_ICONS.find((d) => d.id === id);
         if (iconDef) {
@@ -259,11 +340,15 @@ export default function Desktop() {
     openWindow('about', 'about');
   }, [openWindow]);
 
-  const handleIconDoubleClick = useCallback((iconId: string, contentType?: 'about' | 'projects' | 'skills' | 'experience' | 'contact') => {
+  const handleIconDoubleClick = useCallback((iconId: string, iconType?: string, contentType?: string) => {
     if (iconId === 'terminal') {
       openWindow('terminal');
-    } else if (contentType) {
-      openWindow(iconId, contentType);
+    } else if (iconType === 'content' && contentType) {
+      openWindow(iconId, contentType as 'about' | 'projects' | 'skills' | 'experience' | 'contact');
+    } else if (iconType === 'game') {
+      openWindow(iconId, undefined, iconId as 'snake' | 'tetris' | '2048' | 'pong' | 'quiz' | 'doom' | 'minesweeper' | 'breakout' | 'flappybird' | 'chess' | 'solitaire');
+    } else if (iconType === 'utility') {
+      openWindow(iconId, undefined, undefined, iconId as 'calculator' | 'notepad' | 'weather' | 'settings' | 'filemanager' | 'calendar' | 'sysmonitor' | 'musicplayer' | 'pomodoro' | 'qrcode');
     }
   }, [openWindow]);
 
@@ -275,7 +360,7 @@ export default function Desktop() {
     if (!iconContextMenu) return;
     const iconDef = DESKTOP_ICONS.find((d) => d.id === iconContextMenu.iconId);
     if (iconDef) {
-      handleIconDoubleClick(iconContextMenu.iconId, iconDef.contentType);
+      handleIconDoubleClick(iconContextMenu.iconId, iconDef.type, 'contentType' in iconDef ? iconDef.contentType : undefined);
     }
     setIconContextMenu(null);
   }, [iconContextMenu, handleIconDoubleClick]);
@@ -322,49 +407,77 @@ export default function Desktop() {
   }, [openWindow]);
 
   const renderGameContent = useCallback((gameType: string) => {
+    let content: React.ReactNode;
     switch (gameType) {
-      case 'snake': return <SnakeGame />;
-      case 'tetris': return <TetrisGame />;
-      case '2048': return <Game2048 />;
-      case 'pong': return <PongGame />;
-      case 'quiz': return <QuizGame lang={lang} />;
-      case 'doom': return <DoomGame />;
-      case 'minesweeper': return <MinesweeperGame />;
-      case 'breakout': return <BreakoutGame />;
-      case 'flappybird': return <FlappyBirdGame />;
-      case 'chess': return <ChessGame />;
-      case 'solitaire': return <SolitaireGame />;
-      default: return <div>Game not found</div>;
+      case 'snake': content = <SnakeGame />; break;
+      case 'tetris': content = <TetrisGame />; break;
+      case '2048': content = <Game2048 />; break;
+      case 'pong': content = <PongGame />; break;
+      case 'quiz': content = <QuizGame lang={lang} />; break;
+      case 'doom': content = <DoomGame />; break;
+      case 'minesweeper': content = <MinesweeperGame />; break;
+      case 'breakout': content = <BreakoutGame />; break;
+      case 'flappybird': content = <FlappyBirdGame />; break;
+      case 'chess': content = <ChessGame />; break;
+      case 'solitaire': content = <SolitaireGame />; break;
+      default: content = <div>Game not found</div>;
     }
+    return <React.Suspense fallback={<div style={{ padding: 16, color: '#00ff9f' }}>Loading...</div>}>{content}</React.Suspense>;
   }, [lang]);
 
   const renderUtilityContent = useCallback((utilityType: string) => {
+    let content: React.ReactNode;
     switch (utilityType) {
-      case 'calculator': return <CalculatorApp />;
-      case 'notepad': return <NotepadApp />;
-      case 'weather': return <WeatherApp />;
-      case 'settings': return <SettingsApp theme={theme} lang={lang} setTheme={(t) => setTheme(t as Theme)} setLang={(l) => setLang(l as Lang)} />;
-      case 'filemanager': return <FileManagerApp />;
-      case 'calendar': return <CalendarApp />;
-      case 'sysmonitor': return <SystemMonitorApp />;
-      case 'musicplayer': return <MusicPlayerApp />;
-      case 'pomodoro': return <PomodoroApp />;
-      case 'qrcode': return <QRCodeApp />;
-      default: return <div>App not found</div>;
+      case 'calculator': content = <CalculatorApp />; break;
+      case 'notepad': content = <NotepadApp />; break;
+      case 'weather': content = <WeatherApp />; break;
+      case 'settings': content = <SettingsApp theme={theme} lang={lang} setTheme={(t) => setTheme(t as Theme)} setLang={(l) => setLang(l as Lang)} />; break;
+      case 'filemanager': content = <FileManagerApp />; break;
+      case 'calendar': content = <CalendarApp />; break;
+      case 'sysmonitor': content = <SystemMonitorApp />; break;
+      case 'musicplayer': content = <MusicPlayerApp />; break;
+      case 'pomodoro': content = <PomodoroApp />; break;
+      case 'qrcode': content = <QRCodeApp />; break;
+      default: content = <div>App not found</div>;
     }
+    return <React.Suspense fallback={<div style={{ padding: 16, color: '#00ff9f' }}>Loading...</div>}>{content}</React.Suspense>;
   }, [theme, lang, setTheme, setLang]);
 
   return (
     <div className="os-desktop" onClick={handleDesktopClick} onContextMenu={handleDesktopContextMenu}>
       {/* Desktop icons */}
-      <div className="os-desktop__icons">
+      <div className="os-desktop__icons os-desktop__icons--portfolio">
         {DESKTOP_ICONS.map((iconDef) => (
           <DesktopIcon
             key={iconDef.id}
             icon={iconDef.icon}
             label={iconDef.label}
             iconId={iconDef.id}
-            onDoubleClick={() => handleIconDoubleClick(iconDef.id, iconDef.contentType)}
+            onDoubleClick={() => handleIconDoubleClick(iconDef.id, iconDef.type, 'contentType' in iconDef ? iconDef.contentType : undefined)}
+            onRightClick={handleIconRightClick}
+          />
+        ))}
+      </div>
+      <div className="os-desktop__icons os-desktop__icons--utils">
+        {UTILITY_ICONS.map((iconDef) => (
+          <DesktopIcon
+            key={iconDef.id}
+            icon={iconDef.icon}
+            label={iconDef.label}
+            iconId={iconDef.id}
+            onDoubleClick={() => handleIconDoubleClick(iconDef.id, iconDef.type)}
+            onRightClick={handleIconRightClick}
+          />
+        ))}
+      </div>
+      <div className="os-desktop__icons os-desktop__icons--games">
+        {GAME_ICONS.map((iconDef) => (
+          <DesktopIcon
+            key={iconDef.id}
+            icon={iconDef.icon}
+            label={iconDef.label}
+            iconId={iconDef.id}
+            onDoubleClick={() => handleIconDoubleClick(iconDef.id, iconDef.type)}
             onRightClick={handleIconRightClick}
           />
         ))}
@@ -455,6 +568,23 @@ export default function Desktop() {
           onOpen={handleIconContextOpen}
           onProperties={handleIconContextProperties}
         />
+      )}
+
+      {/* Alt+Tab Overlay */}
+      {altTabActive && (
+        <div className="os-alttab-overlay" role="dialog" aria-label="Window switcher">
+          <div className="os-alttab-grid">
+            {windows.filter((w) => w.isOpen).map((win, i) => (
+              <div
+                key={win.id}
+                className={`os-alttab-item${i === altTabIndex ? ' os-alttab-item--active' : ''}`}
+              >
+                <span className="os-alttab-icon">{win.icon}</span>
+                <span className="os-alttab-title">{win.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -237,11 +237,17 @@ function generateSAN(board: Board, move: Move): string {
   return san;
 }
 
+interface PromotionPending {
+  from: Position;
+  to: Position;
+}
+
 interface ChessState {
   board: Board; turn: Color; rights: CastlingRights; ep: Position | null;
   captured: { w: PieceType[]; b: PieceType[] }; history: string[];
   gameOver: boolean; result: string; selected: Position | null; legal: Move[];
   lastMove: { from: Position; to: Position } | null;
+  promotionPending: PromotionPending | null;
 }
 
 function init(): ChessState {
@@ -250,6 +256,7 @@ function init(): ChessState {
     rights: { wK: true, wQ: true, bK: true, bQ: true },
     ep: null, captured: { w: [], b: [] }, history: [],
     gameOver: false, result: '', selected: null, legal: [], lastMove: null,
+    promotionPending: null,
   };
 }
 
@@ -289,23 +296,128 @@ function makeMove(state: ChessState, move: Move): ChessState {
   let gameOver = false, result = '';
   if (isCheckmate(nb, next, nr, ep)) { gameOver = true; result = state.turn === 'w' ? '1-0' : '0-1'; }
   else if (isStalemate(nb, next, nr, ep)) { gameOver = true; result = '1/2-1/2'; }
-  return { board: nb, turn: next, rights: nr, ep, captured: cap, history: hist, gameOver, result, selected: null, legal: [], lastMove: { from: move.from, to: move.to } };
+  return { board: nb, turn: next, rights: nr, ep, captured: cap, history: hist, gameOver, result, selected: null, legal: [], lastMove: { from: move.from, to: move.to }, promotionPending: null };
+}
+
+const PIECE_VALUES: Record<PieceType, number> = { P: 100, N: 320, B: 330, R: 500, Q: 900, K: 20000 };
+
+const PAWN_TABLE = [
+   0,  0,  0,  0,  0,  0,  0,  0,
+  50, 50, 50, 50, 50, 50, 50, 50,
+  10, 10, 20, 30, 30, 20, 10, 10,
+   5,  5, 10, 25, 25, 10,  5,  5,
+   0,  0,  0, 20, 20,  0,  0,  0,
+   5, -5,-10,  0,  0,-10, -5,  5,
+   5, 10, 10,-20,-20, 10, 10,  5,
+   0,  0,  0,  0,  0,  0,  0,  0,
+];
+
+const KNIGHT_TABLE = [
+  -50,-40,-30,-30,-30,-30,-40,-50,
+  -40,-20,  0,  0,  0,  0,-20,-40,
+  -30,  0, 10, 15, 15, 10,  0,-30,
+  -30,  5, 15, 20, 20, 15,  5,-30,
+  -30,  0, 15, 20, 20, 15,  0,-30,
+  -30,  5, 10, 15, 15, 10,  5,-30,
+  -40,-20,  0,  5,  5,  0,-20,-40,
+  -50,-40,-30,-30,-30,-30,-40,-50,
+];
+
+function evaluateBoard(board: Board): number {
+  let score = 0;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const piece = board[r][c];
+      if (!piece) continue;
+      const sign = piece.color === 'w' ? 1 : -1;
+      let val = PIECE_VALUES[piece.type];
+      if (piece.type === 'P') {
+        const idx = piece.color === 'w' ? r * 8 + c : (7 - r) * 8 + c;
+        val += PAWN_TABLE[idx];
+      } else if (piece.type === 'N') {
+        const idx = piece.color === 'w' ? r * 8 + c : (7 - r) * 8 + c;
+        val += KNIGHT_TABLE[idx];
+      }
+      score += sign * val;
+    }
+  }
+  return score;
+}
+
+function orderMoves(moves: Move[]): Move[] {
+  return moves.sort((a, b) => {
+    let sa = 0, sb = 0;
+    if (a.captured) sa += PIECE_VALUES[a.captured.type] - PIECE_VALUES[a.piece.type] / 10;
+    if (b.captured) sb += PIECE_VALUES[b.captured.type] - PIECE_VALUES[b.piece.type] / 10;
+    if (a.promotion) sa += PIECE_VALUES[a.promotion];
+    if (b.promotion) sb += PIECE_VALUES[b.promotion];
+    return sb - sa;
+  });
+}
+
+function minimax(board: Board, depth: number, alpha: number, beta: number, maximizing: boolean, rights: CastlingRights, ep: Position | null): number {
+  const color: Color = maximizing ? 'b' : 'w';
+  if (depth === 0) return evaluateBoard(board);
+
+  let moves = getAllLegal(board, color, rights, ep);
+  if (moves.length === 0) {
+    if (isInCheck(board, color)) return maximizing ? -99999 + (3 - depth) : 99999 - (3 - depth);
+    return 0;
+  }
+
+  moves = orderMoves(moves);
+
+  if (maximizing) {
+    let best = -Infinity;
+    for (const m of moves) {
+      const nb = applyMove(board, m);
+      const nr = updateRights(rights, m);
+      let nep: Position | null = null;
+      if (m.piece.type === 'P' && Math.abs(m.to.row - m.from.row) === 2)
+        nep = { row: (m.from.row + m.to.row) / 2, col: m.from.col };
+      const val = minimax(nb, depth - 1, alpha, beta, false, nr, nep);
+      if (val > best) best = val;
+      if (best > alpha) alpha = best;
+      if (alpha >= beta) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const m of moves) {
+      const nb = applyMove(board, m);
+      const nr = updateRights(rights, m);
+      let nep: Position | null = null;
+      if (m.piece.type === 'P' && Math.abs(m.to.row - m.from.row) === 2)
+        nep = { row: (m.from.row + m.to.row) / 2, col: m.from.col };
+      const val = minimax(nb, depth - 1, alpha, beta, true, nr, nep);
+      if (val < best) best = val;
+      if (best < beta) beta = best;
+      if (alpha >= beta) break;
+    }
+    return best;
+  }
 }
 
 function aiTurn(state: ChessState): ChessState {
   if (state.gameOver || state.turn !== 'b') return state;
   const moves = getAllLegal(state.board, 'b', state.rights, state.ep);
   if (!moves.length) return state;
-  const vals: Record<PieceType, number> = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 100 };
-  let best = -Infinity, bests: Move[] = [];
+
+  let bestScore = -Infinity;
+  let bestMoves: Move[] = [];
+
   for (const m of moves) {
-    let s = 0;
-    if (m.captured) s += vals[m.captured.type];
-    if (m.to.row >= 2 && m.to.row <= 5 && m.to.col >= 2 && m.to.col <= 5) s += 0.5;
-    s += Math.random() * 0.5;
-    if (s > best) { best = s; bests = [m]; } else if (s === best) bests.push(m);
+    const nb = applyMove(state.board, m);
+    const nr = updateRights(state.rights, m);
+    let nep: Position | null = null;
+    if (m.piece.type === 'P' && Math.abs(m.to.row - m.from.row) === 2)
+      nep = { row: (m.from.row + m.to.row) / 2, col: m.from.col };
+    const score = minimax(nb, 2, -Infinity, Infinity, false, nr, nep);
+    if (score > bestScore) { bestScore = score; bestMoves = [m]; }
+    else if (score === bestScore) bestMoves.push(m);
   }
-  return makeMove(state, bests[Math.floor(Math.random() * bests.length)]);
+
+  return makeMove(state, bestMoves[Math.floor(Math.random() * bestMoves.length)]);
 }
 
 const PV: Record<PieceType, number> = { P: 1, N: 3, B: 3, R: 5, Q: 9, K: 0 };
@@ -330,8 +442,10 @@ export default function ChessGame() {
         }
         const move = prev.legal.find((m) => m.to.row === row && m.to.col === col);
         if (move) {
-          const final = move.promotion ? { ...move, promotion: 'Q' as PieceType } : move;
-          const ns = makeMove(prev, final);
+          if (move.promotion) {
+            return { ...prev, promotionPending: { from: move.from, to: move.to }, selected: null, legal: [] };
+          }
+          const ns = makeMove(prev, move);
           setTimeout(() => setGs((c) => aiTurn(c)), 150);
           return ns;
         }
@@ -342,6 +456,21 @@ export default function ChessGame() {
         return { ...prev, selected: { row, col }, legal: m };
       }
       return prev;
+    });
+  }, []);
+
+  const handlePromotion = useCallback((pieceType: PieceType) => {
+    setGs((prev) => {
+      if (!prev.promotionPending) return prev;
+      const { from, to } = prev.promotionPending;
+      const move = prev.legal.find(
+        (m) => m.from.row === from.row && m.from.col === from.col &&
+               m.to.row === to.row && m.to.col === to.col && m.promotion === pieceType
+      );
+      if (!move) return { ...prev, promotionPending: null };
+      const ns = makeMove(prev, move);
+      setTimeout(() => setGs((c) => aiTurn(c)), 150);
+      return ns;
     });
   }, []);
 
@@ -404,7 +533,7 @@ export default function ChessGame() {
                   <div key={`${r}-${c}`} className={cls} onClick={() => handleClick(r, c)}>
                     {legal && !cell && <div className="chess-move-dot" />}
                     {legal && cell && <div className="chess-capture-dot" />}
-                    {cell && <span style={{ position: 'relative', zIndex: 1 }}>{UNICODE[`${cell.color}${cell.type}`]}</span>}
+                    {cell && <span className="chess-piece" style={{ position: 'relative', zIndex: 1 }}>{UNICODE[`${cell.color}${cell.type}`]}</span>}
                   </div>
                 );
               })
@@ -454,9 +583,29 @@ export default function ChessGame() {
         </div>
       )}
 
+      {gs.promotionPending && (
+        <div className="game-overlay" onClick={(e) => e.stopPropagation()}>
+          <div className="chess-promotion-dialog">
+            <div className="chess-promotion-title">Promote pawn to:</div>
+            <div className="chess-promotion-options">
+              {(['Q', 'R', 'B', 'N'] as PieceType[]).map((pt) => (
+                <button
+                  key={pt}
+                  className="chess-promotion-btn"
+                  onClick={() => handlePromotion(pt)}
+                  aria-label={`Promote to ${pt}`}
+                >
+                  {UNICODE[`w${pt}`]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="game-footer">
         <span>Click piece then square</span>
-        <span>Pawns auto-promote to Queen</span>
+        <span>Pawns promote with your choice</span>
       </div>
     </div>
   );
